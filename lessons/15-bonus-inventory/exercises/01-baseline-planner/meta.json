@@ -1,0 +1,11 @@
+{
+  "title": "Know your demand, then beat a planner",
+  "prompt": "Before any RL, do what an operations analyst would do: **look at the data** and **tune the classic policy**. Its profit is the bar every agent must clear.\n\n1. `weekday_profile(history)` — using **non-promo days only**, the mean demand of each weekday (Mon…Sun) divided by the mean over all those days. Returns 7 numbers; a value of 2.0 means that weekday sells twice an average day.\n2. `promo_lift(history)` — how much a promotion multiplies demand, *corrected for the weekday*: sum of demand on promo days ÷ sum of the expected demand on those same days, where the expectation for a day is the mean non-promo demand of its weekday.\n3. `grid_search_sS(env, s_grid, S_grid, seeds)` — try every pair with `S > s`, score each with `evaluate_policy(env, lambda e: s_S_policy(e, s, S), seeds=seeds)` and return `(best_s, best_S, best_profit, table)` with `table[(s, S)] = profit`.\n\n`history` is a dict of numpy arrays `demand`, `dow` (0 = Monday) and `promo` (1 on promo days), as returned by `load_demand_csv` or `generate_sales_history`.\n\nThe demo explores the bundled two-year sales file, then tunes on **4 simulated training years** and reports profit on **20 held-out test years**.\n\n**Pass:** both statistics match hand-computed cases and recover the simulator's patterns, the grid search is exact, and the tuned (s, S) earns **≥ 13,000** per held-out test year.",
+  "hints": [
+    "Boolean masks do all the work: `normal = promo == 0`, then `d[normal & (dow == k)].mean()` for each weekday k.",
+    "For the lift build `base = np.array([d[normal & (dow == k)].mean() for k in range(7)])`; the expected demand on the promo days is `base[dow[promo == 1]].sum()`.",
+    "Python closures capture variables, not values — but evaluate_policy calls your lambda immediately, so `lambda e: s_S_policy(e, s, S)` inside the loop is fine. Keep `best = (None, None, -np.inf)` and update it whenever a profit is larger."
+  ],
+  "xp": 250,
+  "timeout": 60
+}

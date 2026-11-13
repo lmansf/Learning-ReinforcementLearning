@@ -44,8 +44,8 @@ __all__ = [
 ]
 
 DOW_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-# relative demand by weekday: quiet early week, busy weekend
-WEEKLY = np.array([0.80, 0.85, 0.90, 0.95, 1.20, 1.45, 1.10])
+# relative demand by weekday: quiet early week, busy weekend (think fresh bakery item)
+WEEKLY = np.array([0.60, 0.70, 0.80, 0.90, 1.40, 2.00, 1.30])
 WEEKLY = WEEKLY / WEEKLY.mean()
 
 
@@ -76,7 +76,7 @@ def _promo_schedule(days: int, rng, rate: float = 0.06, length: int = 3):
 
 
 def demand_mean_profile(dates, base: float = 12.0, trend: float = 0.08,
-                        season: float = 0.20, promo=None, promo_lift: float = 1.8):
+                        season: float = 0.20, promo=None, promo_lift: float = 2.5, weekly=None):
     """Expected demand per day: base × trend × yearly season × holiday bump × weekday × promo."""
     n = len(dates)
     t = np.arange(n)
@@ -84,13 +84,14 @@ def demand_mean_profile(dates, base: float = 12.0, trend: float = 0.08,
     dow = np.array([d.weekday() for d in dates])
     yearly = 1.0 + season * np.sin(2 * np.pi * (doy - 80) / 365.25)          # summer peak
     holiday = 1.0 + 0.6 * np.exp(-0.5 * ((doy - 352) / 6.0) ** 2)             # pre-Christmas rush
-    mu = base * (1.0 + trend * t / 365.0) * yearly * holiday * WEEKLY[dow]
+    wk = WEEKLY if weekly is None else np.asarray(weekly, dtype=float) / np.mean(weekly)
+    mu = base * (1.0 + trend * t / 365.0) * yearly * holiday * wk[dow]
     if promo is not None:
         mu = mu * np.where(np.asarray(promo) > 0, promo_lift, 1.0)
     return mu
 
 
-def _neg_binomial(rng, mu, dispersion: float = 6.0):
+def _neg_binomial(rng, mu, dispersion: float = 20.0):
     """Over-dispersed counts with mean `mu` (variance mu + mu²/dispersion)."""
     mu = np.maximum(np.asarray(mu, dtype=float), 1e-6)
     p = dispersion / (dispersion + mu)
@@ -98,7 +99,7 @@ def _neg_binomial(rng, mu, dispersion: float = 6.0):
 
 
 def generate_sales_history(days: int = 730, seed: int = 0, start: str = "2023-01-02",
-                           base: float = 12.0, **kw):
+                           base: float = 12.0, dispersion: float = 20.0, **kw):
     """A realistic synthetic daily demand history for one product.
 
     Returns a dict of equal-length sequences:
@@ -111,7 +112,7 @@ def generate_sales_history(days: int = 730, seed: int = 0, start: str = "2023-01
     ds = _dates(start, days)
     promo = _promo_schedule(days, rng)
     mu = demand_mean_profile(ds, base=base, promo=promo, **kw)
-    demand = _neg_binomial(rng, mu).astype(int)
+    demand = _neg_binomial(rng, mu, dispersion).astype(int)
     return {"dates": [d.isoformat() for d in ds], "demand": demand,
             "dow": np.array([d.weekday() for d in ds]), "promo": promo.astype(int)}
 
@@ -175,11 +176,11 @@ def load_demand_csv(path: str, date_col: str = "date", demand_col: str = "demand
 class InventoryEnv:
     """Daily replenishment of one product. Gymnasium-style API.
 
-    Parameters (defaults model a fresh grocery item selling ~12 units/day)
+    Parameters (defaults model a fresh bakery item selling ~12 units/day)
       horizon      : days per episode (truncated afterwards)
       lead_time    : days between ordering and delivery
       order_sizes  : the discrete action set (units). Default 0, step, …, 8·step with
-                     step = order_step (default ≈ 0.4 × mean daily demand, at least 1)
+                     step = order_step (default ≈ 0.5 × mean daily demand, at least 1)
       capacity     : max units on the shelf/backroom; extra deliveries are refused
       price, unit_cost, holding_cost (per unit per night), order_cost (fixed fee per order),
       stockout_penalty (goodwill cost per lost sale), spoil_rate (fraction of leftover stock
@@ -203,12 +204,13 @@ class InventoryEnv:
     def __init__(self, horizon: int = 365, lead_time: int = 2, order_step: int | None = None,
                  n_actions: int = 9, order_sizes=None, capacity: int | None = None,
                  price: float = 10.0, unit_cost: float = 6.0, holding_cost: float = 0.10,
-                 order_cost: float = 15.0, stockout_penalty: float = 1.0,
-                 spoil_rate: float = 0.02, salvage: bool = True, obs: str = "tabular",
+                 order_cost: float = 5.0, stockout_penalty: float = 1.0,
+                 spoil_rate: float = 0.05, salvage: bool = True, obs: str = "tabular",
                  base_demand: float = 12.0, demand_series=None, promo_series=None, dates=None,
                  start: int = 0, random_start: bool = False, jitter_weeks: int = 0,
                  init_stock: int | None = None, ref_demand: float | None = None,
-                 accounting: str = "accrual"):
+                 accounting: str = "accrual", demand_kw: dict | None = None,
+                 dispersion: float = 20.0):
         self.replay = demand_series is not None
         if self.replay:
             self.series = np.asarray(demand_series, dtype=float)
@@ -227,11 +229,12 @@ class InventoryEnv:
             mean_demand = float(ref_demand)
         self.mean_demand = mean_demand
         self.base_demand = base_demand
-        step = order_step or max(1, int(round(0.4 * mean_demand)))
+        step = order_step or max(1, int(round(0.5 * mean_demand)))
         self.order_step = step
         self.order_sizes = (np.asarray(order_sizes, dtype=int) if order_sizes is not None
                             else step * np.arange(n_actions))
         self.n_actions = len(self.order_sizes)
+        self._uniform = bool(np.array_equal(self.order_sizes, step * np.arange(self.n_actions)))
         self.capacity = int(capacity or round(10 * mean_demand))
         self.horizon, self.lead_time = int(horizon), int(lead_time)
         self.price, self.unit_cost = float(price), float(unit_cost)
@@ -241,11 +244,13 @@ class InventoryEnv:
         if accounting not in ("accrual", "cash"):
             raise ValueError("accounting must be 'accrual' or 'cash'")
         self.accounting = accounting
+        self.demand_kw = dict(demand_kw or {})
+        self.dispersion = float(dispersion)
         self.start, self.random_start, self.jitter_weeks = int(start), bool(random_start), int(jitter_weeks)
         self.init_stock = int(round(3 * mean_demand)) if init_stock is None else int(init_stock)
         # tabular state layout
         self.n_pos = int(math.ceil(self.capacity / step)) + 1
-        self.n_states = self.n_pos * 7 * 2 * 3
+        self.n_states = self.n_pos * 7 * 2
         self.obs_dim = 14
         self.rng = np.random.default_rng()
         self.t = 0
@@ -274,8 +279,8 @@ class InventoryEnv:
             offset = int(self.rng.integers(0, 365)) if self.random_start else 0
             ds = _dates("2022-12-26", 365 + n)[offset:offset + n]      # W days before 2023-01-02
             promo = _promo_schedule(n, self.rng)
-            mu = demand_mean_profile(ds, base=self.base_demand, promo=promo)
-            demand = _neg_binomial(self.rng, mu).astype(int)
+            mu = demand_mean_profile(ds, base=self.base_demand, promo=promo, **self.demand_kw)
+            demand = _neg_binomial(self.rng, mu, self.dispersion).astype(int)
             dow = np.array([d.weekday() for d in ds])
             self.dates = [d.isoformat() for d in ds[W:W + H]]
         # per-episode arrays are indexed by day t = 0..H (+ look-ahead)
@@ -290,6 +295,9 @@ class InventoryEnv:
         ratio = trail / max(1e-9, self.mean_demand)
         self.trail_ratio = ratio
         self.level = np.where(ratio < 0.85, 0, np.where(ratio > 1.15, 2, 1))
+        # plain-Python copies: indexing lists is much faster than numpy scalars in step()
+        self._d, self._dow = self.demand.tolist(), self.dow.tolist()
+        self._soon = self.promo_soon.tolist()
 
     def reset(self, seed=None, options=None):
         if seed is not None:
@@ -297,7 +305,8 @@ class InventoryEnv:
         self._new_episode_data()
         self.t = 0
         self.on_hand = self.init_stock
-        self.pipeline = [0] * self.lead_time     # pipeline[k] arrives in k+1 days... see step
+        self.pipeline = [0] * self.lead_time     # pipeline[0] arrives next, pipeline[-1] last
+        self._transit = 0
         self.totals = {"profit": 0.0, "demand": 0, "sales": 0, "lost": 0, "spoiled": 0,
                        "overflow": 0, "ordered": 0, "orders": 0}
         return self._obs(), self._info()
@@ -305,24 +314,34 @@ class InventoryEnv:
     # ------------------------------------------------------------------ observation
     @property
     def in_transit(self) -> int:
-        return int(sum(self.pipeline))
+        return self._transit
 
     @property
     def position(self) -> int:
         """Inventory position: on hand + in transit (what you 'own')."""
-        return self.on_hand + self.in_transit
+        return self.on_hand + self._transit
+
+    def nearest_action(self, units) -> int:
+        """Index of the available order size closest to `units` (0 if units <= 0)."""
+        if units <= 0:
+            return 0
+        sizes = self.order_sizes
+        if self._uniform:
+            return min(self.n_actions - 1, int(units / self.order_step + 0.5))
+        return int(np.argmin(np.abs(sizes - units)))
 
     def state_index(self) -> int:
-        b = min(self.position // self.order_step, self.n_pos - 1)
-        t = min(self.t, len(self.dow) - 1)
-        return int(((b * 7 + self.dow[t]) * 2 + self.promo_soon[t]) * 3 + self.level[t])
+        b = (self.on_hand + self._transit) // self.order_step
+        if b >= self.n_pos:
+            b = self.n_pos - 1
+        t = self.t if self.t < len(self._dow) else len(self._dow) - 1
+        return (b * 7 + self._dow[t]) * 2 + self._soon[t]
 
     def decode_state(self, s: int):
-        """Inverse of state_index: (position_bucket, dow, promo_soon, demand_level)."""
-        s, level = divmod(int(s), 3)
-        s, promo = divmod(s, 2)
+        """Inverse of state_index: (position_bucket, dow, promo_soon)."""
+        s, promo = divmod(int(s), 2)
         b, dow = divmod(s, 7)
-        return b, dow, promo, level
+        return b, dow, promo
 
     def features(self):
         t = min(self.t, len(self.dow) - 1)
@@ -355,6 +374,8 @@ class InventoryEnv:
             raise ValueError(f"action must be in [0, {self.n_actions}), got {action}")
         q = int(self.order_sizes[a])
         t = self.t
+        if t >= self.horizon:
+            raise RuntimeError("episode is over: call reset()")
         purchase = q * self.unit_cost
         fee = self.order_cost if q > 0 else 0.0
         # 1-2: place order, receive deliveries due today
@@ -363,11 +384,12 @@ class InventoryEnv:
         else:
             self.pipeline.append(q)
             arriving = self.pipeline.pop(0)
+            self._transit += q - arriving
         stock = self.on_hand + arriving
         overflow = max(0, stock - self.capacity)
         stock -= overflow
         # 3: customers
-        d = int(self.demand[t])
+        d = self._d[t]
         sales = d if d < stock else stock
         lost = d - sales
         stock -= sales
@@ -383,7 +405,7 @@ class InventoryEnv:
         if self.accounting == "cash":
             # money in minus money out today; leftover stock credited at cost on the last day
             if truncated and self.salvage:
-                salvage = (stock + self.in_transit) * self.unit_cost
+                salvage = (stock + self._transit) * self.unit_cost
             reward = revenue - purchase - fee - holding - penalty + salvage
         else:
             # accrual ("cost of goods sold"): a unit's cost is booked when it is sold or wasted.
@@ -391,7 +413,7 @@ class InventoryEnv:
             # but the reward for a good order shows up much sooner.
             cogs = (sales + spoiled + overflow) * self.unit_cost
             if truncated and not self.salvage:
-                cogs += (stock + self.in_transit) * self.unit_cost
+                cogs += (stock + self._transit) * self.unit_cost
             reward = revenue - cogs - fee - holding - penalty
         self.on_hand = stock
         self.t += 1
@@ -400,7 +422,8 @@ class InventoryEnv:
         T["spoiled"] += spoiled; T["overflow"] += overflow; T["ordered"] += q; T["orders"] += int(q > 0)
         info = self._info(order=q, arrived=arriving, demand=d, sales=sales, lost_sales=lost,
                           spoiled=spoiled, overflow=overflow, inventory=stock,
-                          costs={"revenue": revenue, "purchase": purchase, "order_fee": fee,
+                          costs={"revenue": revenue, "cogs": sales * self.unit_cost,
+                                 "purchase": purchase, "order_fee": fee,
                                  "holding": holding, "stockout": penalty,
                                  "waste": (spoiled + overflow) * self.unit_cost, "salvage": salvage})
         return self._obs(), float(reward), False, truncated, info
@@ -415,26 +438,17 @@ class InventoryEnv:
 def order_up_to_policy(env: InventoryEnv, S: int):
     """Base-stock policy: every day, order enough to lift the inventory position to S
     (rounded to the nearest available order size). Works with any obs mode — it reads env."""
-    sizes = env.order_sizes
-
     def policy(obs):
-        need = S - env.position
-        if need <= 0:
-            return 0
-        return int(np.argmin(np.abs(sizes - need)))
+        return env.nearest_action(S - env.position)
     return policy
 
 
 def s_S_policy(env: InventoryEnv, s: int, S: int):
     """(s, S) policy: when the inventory position drops to s or below, order up to S;
     otherwise order nothing. The fixed order fee is what makes s < S worthwhile."""
-    sizes = env.order_sizes
-
     def policy(obs):
         pos = env.position
-        if pos > s:
-            return 0
-        return int(np.argmin(np.abs(sizes - (S - pos))))
+        return 0 if pos > s else env.nearest_action(S - pos)
     return policy
 
 
