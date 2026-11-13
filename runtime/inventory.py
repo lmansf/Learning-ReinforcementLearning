@@ -18,15 +18,26 @@ Only the standard library and numpy are used.
 
 Timeline of one day (one call to step(a)):
 
-  1. the order of `order_sizes[a]` units is placed and paid for (unit cost + fixed fee);
-     it will arrive `lead_time` days later (lead_time=0 means immediately)
+  1. an order of `order_sizes[a]` units is placed (fixed `order_cost` fee if > 0);
+     it arrives `lead_time` days later (lead_time=0 means immediately)
   2. deliveries due today arrive; anything above `capacity` is refused (overflow, wasted)
-  3. customers arrive: sales = min(on_hand, demand); the rest is lost
+  3. customers arrive: sales = min(on_hand, demand); the rest is lost (stockout penalty)
   4. a fraction of the stock left on the shelf spoils overnight (`spoil_rate`)
   5. holding cost is charged on the stock that is left
 
-reward = revenue − purchases − order fees − holding − stockout penalty
-(and on the final day, leftover stock is credited back at unit cost: `salvage=True`).
+reward = the day's profit. Two bookkeeping conventions, same yearly total:
+  accounting="accrual" (default): revenue − cost of units sold or wasted − fee − holding
+                                  − stockout penalty  (a good order pays off within days)
+  accounting="cash"             : revenue − purchases − fee − holding − stockout penalty,
+                                  leftover stock credited at cost on the last day
+info has sales, lost_sales, spoiled, overflow, inventory, order, demand and a cost breakdown.
+
+Observations: obs="tabular" gives an int in [0, env.n_states) encoding (inventory position
+bucket, weekday, promo-soon flag) — env.decode_state(s) inverts it; obs="vector" gives a
+14-number float32 feature vector (env.features()).
+
+Baselines: order_up_to_policy(env, S), s_S_policy(env, s, S); helpers run_policy and
+evaluate_policy. Data: generate_sales_history, save_csv, load_demand_csv, sample_csv_path.
 """
 from __future__ import annotations
 
@@ -40,7 +51,7 @@ import numpy as np
 __all__ = [
     "InventoryEnv", "generate_sales_history", "demand_mean_profile", "save_csv",
     "load_demand_csv", "sample_csv_path", "order_up_to_policy", "s_S_policy",
-    "run_policy", "evaluate_policy", "DOW_NAMES",
+    "run_policy", "evaluate_policy", "DOW_NAMES", "WEEKLY",
 ]
 
 DOW_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]

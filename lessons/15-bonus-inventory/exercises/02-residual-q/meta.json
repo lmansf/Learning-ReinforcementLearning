@@ -1,0 +1,11 @@
+{
+  "title": "Residual Q-learning: teach the planner new tricks",
+  "prompt": "Plain Q-learning from scratch struggles to even *match* a tuned (s, S) policy within a few hundred simulated years — the demo shows it. Industry's answer: **keep the planner and let RL learn adjustments**.\n\nThe agent sees a tiny **context** — weekday × *promo soon* (14 states) — and picks an **offset** that shifts both s and S for today. Offset 0 *is* the planner, so the agent can only improve on it where the data says so (e.g. stock up before Saturdays and promotions).\n\n1. `context(env, obs)` → `dow * 2 + promo_soon`, using `env.decode_state(obs)` which returns `(position_bucket, dow, promo_soon)`.\n2. `adjusted_action(env, s, S, offset)` → order nothing while `env.position > s + offset`, otherwise order up to `S + offset` via `env.nearest_action(units)`.\n3. `train_residual_q(env, s, S, offsets, episodes, alpha, gamma, eps_start, seed)` → `(Q, returns)`: tabular Q-learning over `(context, offset index)`. Q starts at 0 with **+1.0 on the zero-offset column** so the untrained agent equals the planner. ε decays linearly from `eps_start` to 0 over the first 70% of episodes. Reset every episode with a fresh seed drawn from your `rng`.\n4. `residual_policy(env, Q, s, S, offsets)` → greedy `obs -> action`.\n\nRewards are daily profits, reported with **accrual accounting** (a unit's cost is booked when it is sold or spoils), so a good order is rewarded within days.\n\n**Pass:** unit checks on hand-built states, and the agent beats the tuned planner (s=50, S=70) by **≥ 2 %** profit on 20 held-out simulated years, averaged over 3 training seeds.",
+  "hints": [
+    "`_, dow, promo_soon = env.decode_state(obs)`; for the action: `if env.position > s + offset: return 0` else `return env.nearest_action(S + offset - env.position)`.",
+    "Head start: `Q[:, int(np.flatnonzero(offsets == 0)[0])] = 1.0`. ε: `eps = max(0.0, eps_start * (1 - ep / (0.7 * episodes)))`.",
+    "Inside the episode: `k = int(rng.integers(len(offsets))) if rng.random() < eps else int(np.argmax(Q[c]))`, step with `adjusted_action(env, s, S, offsets[k])`, then `Q[c, k] += alpha * (r + gamma * Q[c2].max() - Q[c, k])` where c2 = context of the new obs. The episode ends when `truncated` is True."
+  ],
+  "xp": 300,
+  "timeout": 60
+}

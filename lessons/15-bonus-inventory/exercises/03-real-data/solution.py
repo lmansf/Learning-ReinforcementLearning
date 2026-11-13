@@ -57,16 +57,17 @@ def evaluate(env, make_policy, seeds=range(5)):
 
 
 def run_pipeline(csv_path=CSV_PATH, n_train=365, seed=0):
-    """The full study. Returns {"s_S": (s, S), "baseline": metrics, "agent": metrics}.
+    """The full study. Returns {"s_S": (s, S), "baseline": metrics, "agent": metrics, "Q": Q}.
 
     1. load the CSV, time_split it, make_envs
-    2. tune the planner on the TRAIN env: grid_search_sS(train_env, S_GRID_LOW, S_GRID_HIGH, TUNE_SEEDS)
+    2. tune the planner on the TRAIN env: s, S, _, _ = grid_search_sS(train_env)
+       (the search grid scales itself to the product's order size)
     3. train the residual agent on the TRAIN env: train_residual_q(train_env, s, S, seed=seed)
     4. evaluate both on the TEST env with evaluate(...) and the default seeds"""
     hist = load_demand_csv(csv_path)
     train, test = time_split(hist, n_train)
     train_env, test_env = make_envs(train, test)
-    s, S, _, _ = grid_search_sS(train_env, S_GRID_LOW, S_GRID_HIGH, TUNE_SEEDS)
+    s, S, _, _ = grid_search_sS(train_env)
     Q, _ = train_residual_q(train_env, s, S, seed=seed)
     return {"s_S": (s, S),
             "baseline": evaluate(test_env, lambda e: s_S_policy(e, s, S)),
@@ -96,9 +97,6 @@ def grid_search_sS(env, s_grid=None, S_grid=None, seeds=TUNE_SEEDS):
                 if p > best[2]:
                     best = (s, S, p)
     return best[0], best[1], best[2], table
-
-
-S_GRID_LOW = S_GRID_HIGH = None     # None = scale the grid from the env's order size
 
 
 def context(env, obs):
@@ -157,9 +155,10 @@ if __name__ == "__main__":
 
     # what does the agent do differently? learned (s, S) shift per context
     Q = res["Q"]
-    shift = [float(OFFSETS[np.argmax(Q[c])]) for c in range(N_CONTEXTS)]
+    step = InventoryEnv(demand_series=hist["demand"][:n_train]).order_step
+    shift = [float(OFFSETS[np.argmax(Q[c])] * step / 6) for c in range(N_CONTEXTS)]
     rlhud.bars(shift, labels=[f"{DOW_NAMES[c // 2]}{'+P' if c % 2 else ''}" for c in range(N_CONTEXTS)],
-               title="Learned shift of (s, S) per context (+P = promo soon)")
+               title="Learned shift of (s, S) in units, per context (+P = promo soon)")
     if up <= 0:
         rlhud.text("On this data the agent did not beat the planner out of time. That is a real, "
                    "useful result: check the train/test demand shift and the size of the uplift "

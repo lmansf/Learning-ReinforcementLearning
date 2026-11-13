@@ -1,5 +1,5 @@
 import numpy as np
-from inventory import InventoryEnv, s_S_policy, evaluate_policy, generate_sales_history, WEEKLY
+from inventory import InventoryEnv, s_S_policy, evaluate_policy, generate_sales_history
 
 weekday_profile = require("weekday_profile")
 promo_lift = require("promo_lift")
