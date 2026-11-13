@@ -1,0 +1,11 @@
+{
+  "title": "TD(0) on the random walk",
+  "prompt": "Implement temporal-difference prediction — learning a guess from a guess.\n\n1. `td_error(r, v_s, v_next, gamma, terminated)` returns **δ = r + γ·V(S') − V(S)**, where a terminal S' is worth 0 (so δ = r − V(S) when `terminated`).\n2. `td0(env, policy, n_episodes, alpha, gamma=1.0, init=0.0, V=None)` returns a numpy array `V` of length `env.n_states`. If `V` is `None` create `np.full(env.n_states, init)`, otherwise keep updating the given array **in place**. After **every** step apply `V[s] += alpha * δ`. Stop an episode on `terminated or truncated`.\n\n`RandomWalk` (Sutton & Barto Example 6.2), the `coin_flip` policy and a `constant_alpha_mc` for comparison are provided. The check starts with a 3-step deterministic chain where you can compute every number by hand, then measures your RMS error on the random walk. **Run** reproduces Figure 6.2: TD vs MC learning curves.",
+  "hints": [
+    "The episode loop is the same as in every lesson so far: `s, _ = env.reset()`, then `s2, r, terminated, truncated, _ = env.step(policy(s))`. The only new thing is the update you do right after each step.",
+    "Use your own `td_error`: `V[s] += alpha * td_error(r, V[s], V[s2], gamma, terminated)`. Then `s = s2` and continue unless the episode is over.",
+    "def td_error(r, v_s, v_next, gamma, terminated):\n    target = r if terminated else r + gamma * v_next\n    return target - v_s\n\nand in td0: `if V is None: V = np.full(env.n_states, float(init))` before the episode loop; `return V` at the end."
+  ],
+  "xp": 120,
+  "timeout": 30
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Generalised Advantage Estimation",
+  "prompt": "Implement the advantage estimator used by A2C, PPO and most modern policy-gradient code.\n\n- `td_errors(rewards, values, dones, last_value, gamma)` → δₜ = rₜ + γ(1 − doneₜ)V(sₜ₊₁) − V(sₜ). `values[t]` is V(sₜ); the state after the final step has value `last_value`.\n- `compute_gae(rewards, values, dones, last_value, gamma, lam)` → `(advantages, returns)` with **Âₜ = δₜ + γλ(1 − doneₜ)Âₜ₊₁**, computed backwards, and **returns = Â + V** (the critic's targets).\n\nA rollout may contain several episodes: `dones[t] = 1` means the episode ended at step t, so neither δ nor Â may look past it. The check includes hand-computed cases and verifies that λ = 0 gives TD errors and λ = 1 gives Monte Carlo returns.",
+  "hints": [
+    "`next_values = np.append(values[1:], last_value)` lines up V(sₜ₊₁) with each step.",
+    "δ = rewards + gamma * (1 - dones) * next_values - values — all vectorised.",
+    "GAE: `running = 0; for t in reversed(range(T)): running = delta[t] + gamma * lam * (1 - dones[t]) * running; adv[t] = running`."
+  ],
+  "xp": 120,
+  "timeout": 20
+}

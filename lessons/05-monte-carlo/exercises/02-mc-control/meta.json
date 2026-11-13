@@ -1,0 +1,11 @@
+{
+  "title": "On-policy MC control on Blackjack",
+  "prompt": "Learn to play Blackjack from scratch with **on-policy first-visit Monte Carlo control**.\n\n1. `epsilon_greedy(q, epsilon, rng)` — `q` is the array of action values for one state; with probability ε return a uniformly random action (`rng.integers(len(q))`), otherwise `argmax(q)`. `rng` is a `np.random.default_rng`.\n2. `mc_control(env, n_episodes, epsilon=0.1, gamma=1.0, seed=None)` returns `(Q, returns)`:\n   - `Q` is a dict `{state: np.zeros(env.n_actions)}`, created lazily the first time a state is seen.\n   - each episode: act ε-greedily w.r.t. the current Q, record `(s, a, r)`; then walk it backwards with `G ← r + γG` and, for the **first** visit of each `(s, a)`, move Q(s,a) to the running mean of its returns: `N += 1; Q += (G − Q)/N`.\n   - `returns` is the list of total rewards per episode.\n   - make `rng = np.random.default_rng(seed)` and pass `seed` to the first `env.reset` only.\n\n`evaluate(env, policy, n_episodes, seed)` is provided. The check plays 20 000 hands with your learned greedy policy and requires it to beat the *stick on 20+* baseline by a wide margin.",
+  "hints": [
+    "There is no separate 'improvement' step: because every new episode acts ε-greedily on the *latest* Q, evaluation and improvement are interleaved — generalised policy iteration, one episode at a time.",
+    "Keep a second dict `N = {state: np.zeros(n_actions)}` of visit counts next to Q. Create both entries when you first see a state, *before* calling epsilon_greedy on it.",
+    "After generating `episode`:\n\nfirst = {}\nfor t, (s, a, _) in enumerate(episode): first.setdefault((s, a), t)\nG = 0.0\nfor t in range(len(episode) - 1, -1, -1):\n    s, a, r = episode[t]\n    G = r + gamma * G\n    if first[(s, a)] == t:\n        N[s][a] += 1\n        Q[s][a] += (G - Q[s][a]) / N[s][a]"
+  ],
+  "xp": 150,
+  "timeout": 40
+}

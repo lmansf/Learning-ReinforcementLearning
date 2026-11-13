@@ -1,0 +1,11 @@
+{
+  "title": "A softmax policy and its score function",
+  "prompt": "Build the linear-softmax policy π(a|s) = softmax(x(s)ᵀθ) — the policy you will train with REINFORCE next.\n\n- `softmax(z)` — numerically stable (subtract the max) and working over the **last axis**, so it handles both a vector and a batch of rows.\n- `policy_probs(theta, x)` — `theta` has shape `(d, n_actions)`, `x` has shape `(d,)`.\n- `grad_log_pi(theta, x, a)` — the **score function** ∇_θ log π(a|s) = **outer(x, onehot(a) − π(·|s))**.\n- `sample_action(theta, x, rng)` — draw a ~ π(·|s).\n\nThe check verifies your gradient against finite differences. The demo uses it to solve a 3-armed bandit by pure gradient ascent.",
+  "hints": [
+    "softmax: `z = z - z.max(axis=-1, keepdims=True); e = np.exp(z); return e / e.sum(axis=-1, keepdims=True)`.",
+    "grad_log_pi: compute `p = policy_probs(theta, x)`, build a one-hot vector for `a`, subtract `p` from it.",
+    "`np.outer(x, onehot - p)` has shape (d, n_actions), like theta. sample_action: `int(rng.choice(len(p), p=p))`."
+  ],
+  "xp": 120,
+  "timeout": 20
+}

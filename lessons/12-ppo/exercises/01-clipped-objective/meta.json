@@ -1,0 +1,11 @@
+{
+  "title": "The clipped surrogate objective",
+  "prompt": "Implement the heart of PPO.\n\n`ppo_clip_loss(logp_new, logp_old, adv, clip_eps)` returns `(loss, grad)`:\n- ratio **rₜ = exp(logp_new − logp_old)**\n- **loss = −mean(min(rₜÂₜ, clip(rₜ, 1−ε, 1+ε)Âₜ))** (negated because we minimise)\n- **grad** = ∂loss/∂logp_new, same shape as `logp_new`. Since d rₜ / d logp_new = rₜ, it is −rₜÂₜ/N — except where the *clipped* term is the minimum, where the objective is flat and the gradient is 0. That happens when Â > 0 and r > 1+ε, or Â < 0 and r < 1−ε.\n\n`ppo_diagnostics(logp_new, logp_old, clip_eps)` returns `(approx_kl, clip_fraction)` with approx_kl = mean((r − 1) − log r).\n\nThe check walks through all six sign/clip cases. The demo plots the objective and its gradient against the ratio.",
+  "hints": [
+    "`ratio = np.exp(logp_new - logp_old)`; `loss = -np.mean(np.minimum(ratio * adv, np.clip(ratio, 1 - eps, 1 + eps) * adv))`.",
+    "`flat = ((adv > 0) & (ratio > 1 + eps)) | ((adv < 0) & (ratio < 1 - eps))` marks samples whose gradient is zero.",
+    "`grad = np.where(flat, 0.0, -ratio * adv) / len(adv)`. Diagnostics: `log_r = logp_new - logp_old; r = np.exp(log_r)`."
+  ],
+  "xp": 150,
+  "timeout": 20
+}

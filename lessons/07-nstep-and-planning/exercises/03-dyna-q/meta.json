@@ -1,0 +1,11 @@
+{
+  "title": "Dyna-Q on a maze",
+  "prompt": "Combine learning and planning: every real step also trains a model, and the model is replayed *n* times to squeeze more out of that experience.\n\n1. `q_update(Q, s, a, r, s2, terminated, alpha, gamma)` — the Q-learning update, in place.\n2. `plan(Q, model, n, rng, alpha, gamma)` — `model` is a dict `{(s, a): (r, s2, terminated)}`. Repeat *n* times: pick a remembered key uniformly at random (`keys = list(model)`, `keys[rng.integers(len(keys))]`), look up its outcome and apply `q_update`. Do nothing if the model is empty.\n3. `dyna_q(env, n_episodes, n_planning, alpha=0.1, gamma=0.95, epsilon=0.1, seed=0)` → `(Q, steps, model)`. With `rng = np.random.default_rng(seed)`, a zero Q table and an empty model, every real step does: **(a)** act ε-greedily (provided `epsilon_greedy`), **(b)** `q_update` from the real transition, **(c)** `model[(s, a)] = (r, s2, terminated)`, **(d)** `plan(...)` with `n_planning` steps. `steps[i]` is the number of real steps in episode *i*.\n\nThe maze is Sutton & Barto's Figure 8.2 (`make_maze()`). The check compares `n_planning = 0` (plain Q-learning) with `n_planning = 10` over 5 seeds. **Run** plots steps per episode for n = 0, 5, 50 and shows how far the value of the goal has spread after only two episodes.",
+  "hints": [
+    "The maze only rewards reaching G (+1), so the first episode is a long random walk for everyone. Planning pays off from episode 2: the single rewarding transition gets replayed and its value propagates backwards through the remembered transitions.",
+    "The model of a deterministic env is just a lookup table: overwrite `model[(s, a)]` every time you take `a` in `s`. Planning uses the same `q_update` as direct RL — the only difference is where the transition comes from.",
+    "Inside the episode loop:\n\na = epsilon_greedy(Q, s, epsilon, rng)\ns2, r, terminated, truncated, _ = env.step(a); n += 1\nq_update(Q, s, a, r, s2, terminated, alpha, gamma)\nmodel[(s, a)] = (r, s2, terminated)\nplan(Q, model, n_planning, rng, alpha, gamma)\nif terminated or truncated: break\ns = s2"
+  ],
+  "xp": 170,
+  "timeout": 40
+}

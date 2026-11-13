@@ -1,0 +1,11 @@
+{
+  "title": "Q-learning on the cliff",
+  "prompt": "Switch one symbol in the SARSA target and you get the most famous algorithm in RL.\n\n1. `q_learning_update(Q, s, a, r, s2, alpha, gamma, terminated)` — in place, `Q[s,a] += α·(r + γ·maxₐ' Q[s2,a'] − Q[s,a])`; if `terminated` the target is just `r`. Return δ.\n2. `q_learning(env, n_episodes, alpha=0.5, gamma=1.0, epsilon=0.1, seed=0)` → `(Q, returns)`. Same set-up as `sarsa` (`rng = np.random.default_rng(seed)`, zero table), but the loop is simpler: choose A ε-greedily from S, step, update, `s = s2`. No A' needed.\n\n`epsilon_greedy`, a working `sarsa` and `greedy_rollout` are provided. The check requires the **optimal** greedy path (return −13) *and* that your agent's online return while exploring is worse than SARSA's — the paradox of S&B Example 6.6. **Run** plots both learning curves and both greedy paths.",
+  "hints": [
+    "The behaviour policy (how you pick the action you take) is still ε-greedy. Only the *target* changes: it assumes you will act greedily from S' onwards.",
+    "`np.max(Q[s2])` is the value of the best action in S'. If `terminated`, there is no S' to bootstrap from: `target = r`.",
+    "Loop body:\n\na = epsilon_greedy(Q, s, epsilon, rng)\ns2, r, terminated, truncated, _ = env.step(a)\nG += r\nq_learning_update(Q, s, a, r, s2, alpha, gamma, terminated)\nif terminated or truncated: break\ns = s2"
+  ],
+  "xp": 150,
+  "timeout": 30
+}

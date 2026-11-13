@@ -1,0 +1,11 @@
+{
+  "title": "Iterative policy evaluation",
+  "prompt": "Compute v_π by turning the Bellman expectation equation into an update rule.\n\n1. `expected_update(env, V, s, policy, gamma)` — return `Σₐ π(a|s) Σ prob · (r + γ·V[s'])` over `env.P[s][a]`, dropping `γ·V[s']` when the transition terminates.\n2. `policy_evaluation(env, policy, gamma, theta, max_sweeps, V=None)` — start from zeros (or the given `V`), and sweep over **all** states, writing each new value into `V` immediately (in place). Track `delta`, the biggest change in the sweep, and stop once `delta < theta` or after `max_sweeps`. Return `(V, sweeps)`.\n\nThe check compares your answer with the exact linear solve from the previous lesson. **Run** shows values spreading out from the terminals sweep by sweep, and what each extra digit of accuracy costs.",
+  "hints": [
+    "`expected_update` is the same double loop as `q_from_v`, except each outcome is weighted by `policy[s, a] * prob` and everything is summed into one number.",
+    "Structure: `for sweep in range(1, max_sweeps + 1): delta = 0.0; for s in range(env.n_states): v_new = expected_update(...); delta = max(delta, abs(v_new - V[s])); V[s] = v_new` and then `if delta < theta: break`.",
+    "Return `V, sweep`. Make sure `V` is a float array you are allowed to modify: `V = np.zeros(env.n_states) if V is None else np.array(V, dtype=float)`."
+  ],
+  "xp": 120,
+  "timeout": 20
+}

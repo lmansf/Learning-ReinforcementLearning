@@ -1,0 +1,11 @@
+{
+  "title": "REINFORCE with a baseline on CartPole",
+  "prompt": "Train a **linear-softmax policy** on CartPole with Monte Carlo policy gradient.\n\nImplement:\n- `returns_to_go(rewards, gamma)` — Gₜ for every step, backwards.\n- `reinforce_update(theta, w, X, A, G, lr, lr_v, normalize=True)` — one update from a batch of time steps:\n  1. Âₜ = Gₜ − wᵀxₜ (learned linear baseline)\n  2. w ← w + lr_v · mean(Â x)  — regress the baseline toward the returns\n  3. optionally normalise Â to mean 0, std 1\n  4. **θ ← θ + lr · mean(Â · outer(x, onehot(a) − π))**\n\nUpdate `theta` and `w` in place and return them. The training loop (provided) plays 5 episodes per update. The check trains 1000 episodes (≈ 5 s) and requires a mean return ≥ 150. The demo also runs plain REINFORCE (no baseline) on the same budget for comparison.",
+  "hints": [
+    "Compute `adv = G - X @ w` once, at the start, and use it for the baseline update; normalise a copy for the policy step.",
+    "Batch probabilities: `P = softmax(X @ theta)` has shape (N, 2). One-hots: `np.eye(theta.shape[1])[A]`.",
+    "`theta += lr * X.T @ ((onehot - P) * adv[:, None]) / N` — that is the mean of Âₜ·outer(xₜ, onehotₜ − πₜ)."
+  ],
+  "xp": 200,
+  "timeout": 60
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Mission 2 · Vent Maze (1,500-step budget)",
+  "prompt": "Level 2 has three cores and a field of vents. Plain Q-learning *can* solve it — after ~3,000 environment steps. You get **1,500**.\n\nImplement `solve_vent_maze(env, seed, alpha, gamma, n_planning, curve)`:\n\n- `env` is wrapped in a **hard step budget**; `env.steps_left` tells you how many real steps remain, and stepping past zero raises an error.\n- Keep running episodes while `env.steps_left > 0` (also stop mid-episode when it hits 0).\n- Return a Q table of shape `(env.n_states, 5)`.\n\nThe station's physics are **deterministic**, so a model learned from experience is exact. Every real transition you store can be replayed for free — this is **Dyna-Q** from lesson 07.\n\nTip: decay ε by the *fraction of budget used*, not by episode count.\n\n**Pass:** greedy return ≥ **46** on level 2 for seeds 0, 1 and 2, within budget.",
+  "hints": [
+    "Keep `model[(s, a)] = (r, s2, terminated)` and a list of the keys you have seen so you can sample one uniformly with rng.integers(len(keys)).",
+    "After each real Q-update, do n_planning updates: pick a random seen (s, a), look up (r, s2, term) and apply the same Q-learning update to it.",
+    "eps = max(0.05, 1 - used / (0.5 * budget)) where used = budget - env.steps_left. With n_planning=30 you should reach 47.6."
+  ],
+  "xp": 250,
+  "timeout": 60
+}

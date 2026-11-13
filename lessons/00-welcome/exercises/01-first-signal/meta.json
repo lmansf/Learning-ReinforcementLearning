@@ -1,0 +1,11 @@
+{
+  "title": "First signal",
+  "prompt": "Warm-up. Implement `running_average(xs)` so it returns a list where element *i* is the mean of `xs[0..i]`.\n\nRL agents constantly track averages of noisy rewards, so this tiny function will come back again and again.\n\nPress **Run** to see the plot, then **Check** to verify.",
+  "hints": [
+    "Keep a running total as you loop over xs.",
+    "After adding xs[i] to the total, the mean so far is total / (i + 1).",
+    "total = 0; out = []; for i, x in enumerate(xs): total += x; out.append(total / (i + 1))"
+  ],
+  "xp": 50,
+  "timeout": 20
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Ordinary vs weighted importance sampling",
+  "prompt": "Evaluate a policy you never actually follow. The data comes from a **random** behaviour policy *b*; you want the value of the **stick on 20+** target policy π in one Blackjack state (soft 13 vs dealer 2 — Sutton & Barto Example 5.4, true value ≈ −0.277).\n\nImplement `is_estimates(episodes, pi, b, gamma=1.0)`. Every episode starts in the same state. For episode *i* compute\n\n- its return from the start, `Gᵢ = Σₜ γᵗ Rₜ₊₁`\n- its importance-sampling ratio, `ρᵢ = Πₜ π(Aₜ|Sₜ) / b(Aₜ|Sₜ)` (call `pi(a, s)` and `b(a, s)`)\n\nand return two lists `(ordinary, weighted)` whose element *k* is the estimate after the first *k+1* episodes:\n\n- ordinary: `Σ ρᵢGᵢ / (k+1)`\n- weighted: `Σ ρᵢGᵢ / Σ ρᵢ` — and `0.0` while `Σ ρᵢ` is still 0.\n\nThe helper `play_from_soft13_vs_2`, both policies and `TRUE_VALUE` are provided. **Run** reproduces Figure 5.3: the error of both estimators over 2000 episodes.",
+  "hints": [
+    "Keep two running sums across episodes: `sum_wg` (Σ ρG) and `sum_w` (Σ ρ). Then both estimates are one division each.",
+    "Inside one episode: start `rho = 1.0, G = 0.0`; for each step t, `rho *= pi(a, s) / b(a, s)` and `G += gamma**t * r`. If π would never take the action, ρ becomes 0 and the episode contributes nothing to the numerator.",
+    "for k, ep in enumerate(episodes, start=1):\n    rho, G = 1.0, 0.0\n    for t, (s, a, r) in enumerate(ep):\n        rho *= pi(a, s) / b(a, s); G += gamma**t * r\n    sum_wg += rho * G; sum_w += rho\n    ordinary.append(sum_wg / k)\n    weighted.append(sum_wg / sum_w if sum_w > 0 else 0.0)"
+  ],
+  "xp": 130,
+  "timeout": 30
+}

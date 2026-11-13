@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en" data-accent="cyan">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="rs-token" content="__RS_TOKEN__">
+  <title>Reward Signal</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 29 9.5v13L16 30 3 22.5v-13z' fill='%2307090d' stroke='%2339d0ff' stroke-width='2'/%3E%3Cpath d='M8 17h4l2-6 4 11 2-5h4' fill='none' stroke='%2339d0ff' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/hud.css">
+</head>
+<body>
+  <div class="fx-bg" aria-hidden="true"><div class="fx-grid"></div><div class="fx-glow"></div><div class="fx-scan"></div></div>
+
+  <div id="boot" class="boot">
+    <div class="boot-mark">
+      <svg viewBox="0 0 64 64" width="72" height="72"><path class="boot-hex" d="M32 4 56 18v28L32 60 8 46V18z"/><path class="boot-wave" d="M16 34h8l4-12 8 22 4-10h8"/></svg>
+    </div>
+    <div class="boot-title">REWARD<span>//</span>SIGNAL</div>
+    <div class="boot-sub" id="boot-sub">Establishing link…</div>
+    <div class="boot-bar"><i></i></div>
+  </div>
+
+  <div id="app" class="app" hidden>
+    <!-- ============ TOP BAR ============ -->
+    <header class="topbar">
+      <button class="icon-btn rail-toggle" id="rail-toggle" title="Toggle mission list ( \ )" aria-label="Toggle mission list">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h16"/></svg>
+      </button>
+      <div class="brand">
+        <svg viewBox="0 0 64 64" class="brand-mark"><path d="M32 4 56 18v28L32 60 8 46V18z"/><path d="M16 34h8l4-12 8 22 4-10h8"/></svg>
+        <div class="brand-text">REWARD<span>//</span>SIGNAL</div>
+      </div>
+      <div class="crumbs" id="crumbs"></div>
+      <div class="top-right">
+        <div class="xp" id="xp" title="Experience">
+          <div class="xp-meta"><span class="xp-rank" id="xp-rank">CADET</span><span class="xp-lv" id="xp-lv">LV 1</span></div>
+          <div class="xp-bar"><i id="xp-fill"></i></div>
+          <div class="xp-num" id="xp-num">0 XP</div>
+        </div>
+        <div class="ring" id="ring" title="Course completion">
+          <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" class="ring-bg"/><circle cx="20" cy="20" r="16" class="ring-fg" id="ring-fg"/></svg>
+          <span id="ring-pct">0%</span>
+        </div>
+        <button class="hud-btn" id="palette-btn" title="Command palette (Ctrl+K)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg><kbd>Ctrl K</kbd></button>
+        <button class="icon-btn" id="settings-btn" title="Settings (Esc)" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      </div>
+    </header>
+
+    <!-- ============ MAIN ============ -->
+    <div class="main" id="main">
+      <nav class="rail panel" id="rail">
+        <div class="panel-head"><span class="label">MISSION SELECT</span><span class="label dim" id="rail-count"></span></div>
+        <div class="rail-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg><input id="rail-filter" placeholder="Filter lessons" spellcheck="false"></div>
+        <div class="rail-list" id="rail-list"></div>
+      </nav>
+
+      <section class="reader panel" id="reader">
+        <div class="reader-scroll" id="reader-scroll">
+          <article class="lesson" id="lesson"></article>
+        </div>
+      </section>
+
+      <div class="divider" id="divider" title="Drag to resize"><i></i></div>
+
+      <section class="bench panel" id="bench">
+        <div class="bench-head">
+          <div class="ex-tabs" id="ex-tabs"></div>
+          <div class="ex-reward" id="ex-reward"></div>
+        </div>
+        <div class="brief" id="brief">
+          <div class="seg" id="brief-tabs">
+            <button data-tab="task" class="on">BRIEF</button>
+            <button data-tab="hints">HINTS <b id="hint-count"></b></button>
+            <button data-tab="solution">SOLUTION</button>
+            <span class="seg-spacer"></span>
+            <button class="brief-collapse" id="brief-collapse" title="Collapse brief"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>
+          </div>
+          <div class="brief-body" id="brief-body"></div>
+        </div>
+        <div class="editor-wrap" id="editor-wrap">
+          <div class="toolbar">
+            <button class="btn primary" id="run-btn" title="Run (Ctrl+Enter)"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg>RUN</button>
+            <button class="btn good" id="check-btn" title="Check (Ctrl+Shift+Enter)"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>CHECK</button>
+            <button class="btn danger" id="stop-btn" title="Stop" disabled><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>STOP</button>
+            <span class="tb-spacer"></span>
+            <span class="save-state" id="save-state">SAVED</span>
+            <button class="btn ghost" id="export-btn" title="Save a copy to workspace/"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/></svg>EXPORT</button>
+            <button class="btn ghost" id="reset-btn" title="Reset to starter code"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4"/></svg>RESET</button>
+          </div>
+          <div class="editor" id="editor"></div>
+        </div>
+        <div class="hsplit" id="hsplit"><i></i></div>
+        <div class="dock" id="dock">
+          <div class="dock-tabs seg" id="dock-tabs">
+            <button data-tab="console" class="on">CONSOLE</button>
+            <button data-tab="visuals">VISUALS <b id="vis-count"></b></button>
+            <button data-tab="checks">CHECKS <b id="chk-count"></b></button>
+            <span class="seg-spacer"></span>
+            <button class="dock-clear" id="dock-clear" title="Clear output">CLEAR</button>
+          </div>
+          <div class="dock-body">
+            <pre class="console" id="console" data-tab="console"></pre>
+            <div class="visuals" id="visuals" data-tab="visuals" hidden></div>
+            <div class="checks" id="checks" data-tab="checks" hidden></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ STATUS BAR ============ -->
+    <footer class="statusbar">
+      <span class="sb-item"><i class="dot" id="link-dot"></i><span id="link-text">LINK</span></span>
+      <span class="sb-item" id="run-state">IDLE</span>
+      <span class="sb-progress" id="sb-progress" hidden><span id="sb-progress-label"></span><span class="sb-bar"><i id="sb-progress-fill"></i></span></span>
+      <span class="sb-spacer"></span>
+      <span class="sb-item dim" id="env-chips"></span>
+      <span class="sb-item dim keys"><kbd>Ctrl ↵</kbd> run <kbd>Ctrl ⇧ ↵</kbd> check <kbd>[ ]</kbd> lessons <kbd>Esc</kbd> menu</span>
+    </footer>
+  </div>
+
+  <!-- ============ OVERLAYS ============ -->
+  <div class="overlay" id="settings" hidden>
+    <div class="modal settings-modal" role="dialog" aria-label="Settings">
+      <div class="modal-head">
+        <div><div class="label dim">SYSTEM</div><div class="modal-title">SETTINGS</div></div>
+        <button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <div class="settings-body">
+        <div class="settings-tabs" id="settings-tabs"></div>
+        <div class="settings-pane" id="settings-pane"></div>
+      </div>
+      <div class="modal-foot"><span class="dim">Settings save automatically</span><button class="btn primary" data-close>RESUME</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="palette" hidden>
+    <div class="modal palette-modal">
+      <div class="palette-input"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg><input id="palette-input" placeholder="Jump to lesson, exercise or command…" spellcheck="false" autocomplete="off"></div>
+      <div class="palette-list" id="palette-list"></div>
+      <div class="palette-foot"><kbd>↑↓</kbd> navigate <kbd>↵</kbd> select <kbd>Esc</kbd> close</div>
+    </div>
+  </div>
+
+  <div class="overlay" id="confirm" hidden>
+    <div class="modal confirm-modal">
+      <div class="label dim" id="confirm-kicker">CONFIRM</div>
+      <div class="modal-title" id="confirm-title"></div>
+      <p id="confirm-text"></p>
+      <div class="modal-foot"><button class="btn ghost" id="confirm-no">CANCEL</button><button class="btn primary" id="confirm-yes">CONFIRM</button></div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+  <canvas class="burst" id="burst"></canvas>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "title": "Open sandbox — bring your own agent",
+  "prompt": "A free-form file with no checks. It detects which optional libraries you have and gives you a starting point:\n\n- With **gymnasium** installed it runs a random agent on CartPole through the real Gymnasium API.\n- Without it, it falls back to the bundled `rlenvs.CartPole`.\n\nIdeas: wrap Core Runner as a `gymnasium.Env`, train Stable-Baselines3 PPO on it, or port your DQN to PyTorch.",
+  "hints": [
+    "Gymnasium custom envs subclass gymnasium.Env and define observation_space, action_space, reset() and step().",
+    "For Core Runner level 4: observation_space = gymnasium.spaces.Box(0, 1, shape=(133,)), action_space = gymnasium.spaces.Discrete(5). Note two of the globals can be negative — use low=-1.",
+    "from stable_baselines3 import PPO; model = PPO('MlpPolicy', env).learn(100_000)"
+  ],
+  "xp": 0,
+  "timeout": 120
+}

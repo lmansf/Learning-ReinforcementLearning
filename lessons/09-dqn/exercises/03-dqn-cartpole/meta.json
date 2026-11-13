@@ -1,0 +1,11 @@
+{
+  "title": "DQN on CartPole",
+  "prompt": "Put it all together: a Deep Q-Network in pure numpy.\n\nThe network, Adam, replay buffer and the training loop are provided (read the loop — it is the whole algorithm on one screen). You implement the four RL pieces it calls:\n\n1. `epsilon_by_step(t, start, end, decay_steps)` — linear decay from `start` to `end`, flat afterwards.\n2. `select_action(q_net, obs, epsilon, rng)` — ε-greedy on `q_net.forward(obs[None, :])[0]`.\n3. `td_targets(rewards, terminated, q_next_target, gamma, q_next_online=None)` — **y = r + γ(1 − done) max Q_target(s′, ·)**; with `q_next_online` given, use **Double DQN**: the online net chooses a′, the target net scores it.\n4. `dqn_loss_and_grad(q_pred, actions, targets)` — mean **Huber** loss on Q(s, a_taken) − y and its gradient w.r.t. `q_pred` (zero for untaken actions).\n\nThe check unit-tests each piece, then trains for 70 000 steps (≈ 30 s here) and requires a greedy mean return ≥ 150 (max is 500). Run the demo to watch the learning curve — expect it to be bumpy.",
+  "hints": [
+    "epsilon_by_step: `frac = min(t / decay_steps, 1.0); return start + frac * (end - start)`.",
+    "td_targets: plain DQN `next_v = q_next_target.max(axis=1)`; Double DQN `a = q_next_online.argmax(axis=1); next_v = q_next_target[np.arange(len(a)), a]`. Then `rewards + gamma * (1 - terminated) * next_v`.",
+    "dqn_loss_and_grad: `rows = np.arange(B); err = q_pred[rows, actions] - targets`; loss is the mean of the Huber of err; `dq = np.zeros_like(q_pred); dq[rows, actions] = np.clip(err, -1, 1) / B`."
+  ],
+  "xp": 300,
+  "timeout": 150
+}

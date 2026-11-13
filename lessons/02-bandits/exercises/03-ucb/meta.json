@@ -1,0 +1,11 @@
+{
+  "title": "Upper Confidence Bound",
+  "prompt": "Implement UCB action selection, then the loop that uses it.\n\n1. `ucb_scores(Q, N, t, c)` — return an array with `Q[a] + c · sqrt(ln t / N[a])` for every arm, and `+inf` for arms with `N[a] == 0`.\n2. `ucb_action(Q, N, t, c)` — the arm with the highest score (`np.argmax`, ties → lowest index).\n3. `run_ucb(bandit, steps, c)` — for `t = 1 … steps`: choose with UCB, `r = bandit.pull(a)`, update the count and the **sample-average** estimate, and record `r` and whether `a == bandit.optimal_action`.\n\nA working ε-greedy baseline `run_eps_greedy` is provided. **Run** compares both over 100 seeded bandits.",
+  "hints": [
+    "Use `np.log` (natural log). Start with `scores = np.full(len(Q), np.inf)` and only compute the bound where `N > 0`, so you never divide by zero.",
+    "A boolean mask does it in one line: `tried = N > 0; scores[tried] = Q[tried] + c * np.sqrt(np.log(t) / N[tried])`. In the loop, `t` already starts at 1 — don't pass `t - 1` or ln 0 appears.",
+    "Loop body: `a = ucb_action(Q, N, t, c); r = bandit.pull(a); N[a] += 1; Q[a] += (r - Q[a]) / N[a]; rewards.append(r); optimal.append(a == bandit.optimal_action)`."
+  ],
+  "xp": 120,
+  "timeout": 30
+}

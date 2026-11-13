@@ -1,0 +1,11 @@
+{
+  "title": "Semi-gradient SARSA on Mountain Car",
+  "prompt": "Teach an under-powered car to rock back and forth until it can climb the hill — using **linear function approximation over tile-coded features**.\n\nImplement:\n- `q_values(w, idx)` → q̂(s, a) for all actions. `w` has shape `(n_actions, n_features)`; with binary tile features, wₐᵀx(s) is just the sum of the active weights.\n- `epsilon_greedy(q, epsilon, rng)` with **random tie-breaking** (all weights start at 0, so ties are everywhere at first).\n- `sarsa_update(w, idx, a, r, idx_next, a_next, terminated, alpha, gamma)` → target r + γ q̂(S′, A′) (or just r if terminated), δ = target − q̂(S, A), add αδ to the active weights of action `a`. Return δ.\n\nThe training loop is provided: read it — note how a *truncated* episode still bootstraps. The check trains for 150 episodes (seeded) and expects the car to reach the flag in under 200 steps on average. The demo trains longer and draws the cost-to-go surface.",
+  "hints": [
+    "q_values: fancy indexing `w[:, idx]` has shape (n_actions, n_tilings); sum over the last axis.",
+    "sarsa_update: `target = r if terminated else r + gamma * w[a_next, idx_next].sum()` and `delta = target - w[a, idx].sum()`.",
+    "Then `w[a, idx] += alpha * delta` and `return delta`. Because each tile index appears once per tiling, the in-place add is safe."
+  ],
+  "xp": 200,
+  "timeout": 60
+}

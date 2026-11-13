@@ -1,0 +1,11 @@
+{
+  "title": "First-visit Monte Carlo prediction",
+  "prompt": "Estimate v_π purely from sampled episodes — no model, no bootstrapping.\n\n1. `generate_episode(env, policy, seed=None)` plays one episode and returns a list of `(state, action, reward)` triples `[(S₀, A₀, R₁), (S₁, A₁, R₂), …]`. Pass `seed` to `env.reset`, stop on `terminated or truncated`.\n2. `mc_prediction(env, policy, n_episodes, gamma=1.0, first_visit=True, seed=None)` returns a dict `{state: V(state)}`: the average of the returns that followed visits to each state. With `first_visit=True` only the **first** visit of a state in each episode contributes; with `False`, every visit does. Use `seed` for the **first** episode's reset only (afterwards the env's own RNG keeps dealing new cards).\n\nWalk each episode **backwards** with `G ← R + γ·G` — the same trick as `returns_to_go` in lesson 1.\n\nThe check first uses a tiny scripted env where state A is visited twice (so first- and every-visit give different answers you can work out by hand), then evaluates the *stick on 20* Blackjack policy. **Run** draws the two value surfaces of Sutton & Barto's Figure 5.1.",
+  "hints": [
+    "Keep two dicts, `returns_sum` and `returns_count` (a `collections.defaultdict` is handy). The estimate is their ratio — you could also keep a running mean.",
+    "Before the backward pass, record the first index at which each state appears: `first = {}; for t, (s, _, _) in enumerate(episode): first.setdefault(s, t)`. In the backward pass, skip time t when `first_visit and first[s] != t`.",
+    "G = 0.0\nfor t in range(len(episode) - 1, -1, -1):\n    s, _, r = episode[t]\n    G = r + gamma * G\n    if first_visit and first[s] != t: continue\n    returns_sum[s] += G; returns_count[s] += 1\n\n…and finally `return {s: returns_sum[s] / returns_count[s] for s in returns_count}`."
+  ],
+  "xp": 120,
+  "timeout": 30
+}

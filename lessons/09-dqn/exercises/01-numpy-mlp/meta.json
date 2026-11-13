@@ -1,0 +1,11 @@
+{
+  "title": "A neural network from scratch",
+  "prompt": "Deep RL is just RL with a neural network as the function approximator — so let's build one, with **no autograd**.\n\nImplement two methods of `MLP` (Linear → ReLU → … → Linear):\n\n- `forward(x)` — `x` has shape `(batch, n_in)`. For each layer: remember its input in `self._inputs`, compute `h @ W + b`, apply ReLU except on the last layer.\n- `backward(dout)` — given ∂loss/∂output, return a list of gradients in the same order as `self.params` (`[W0, b0, W1, b1, …]`). Use **∂L/∂W = inputᵀ·d**, **∂L/∂b = Σ_batch d**, and propagate **d ← (d·Wᵀ) ⊙ [input > 0]**.\n\nThe check compares your gradients with **finite differences** — the universal way to debug a backward pass. `Adam` is provided; the demo uses both to fit sin(3x).",
+  "hints": [
+    "forward: `h = x; self._inputs = []; for i in range(self.n_layers): W, b = self.params[2*i], self.params[2*i+1]; self._inputs.append(h); h = h @ W + b` and `np.maximum(h, 0)` if i is not the last layer.",
+    "backward: loop `for i in reversed(range(self.n_layers))`. The gradient for W is `self._inputs[i].T @ d`, for b it is `d.sum(axis=0)`.",
+    "Before moving to layer i−1: `d = (d @ W.T) * (self._inputs[i] > 0)`. The ReLU that produced layer i's input is exactly where `self._inputs[i] > 0`. Skip this for i = 0."
+  ],
+  "xp": 150,
+  "timeout": 30
+}

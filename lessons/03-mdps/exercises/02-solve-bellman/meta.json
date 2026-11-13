@@ -1,0 +1,11 @@
+{
+  "title": "Solving the Bellman equation exactly",
+  "prompt": "For a **fixed** policy, the Bellman expectation equation is a system of linear equations, one per state. Solve it.\n\n1. `policy_model(env, policy)` — with `policy[s, a] = π(a|s)`, build\n   - `P_pi[s, s'] = Σₐ π(a|s) · p(s'|s,a)` counting **only transitions that do not terminate**\n   - `r_pi[s] = Σₐ π(a|s) · Σ p · r` (expected immediate reward, terminating transitions included)\n2. `solve_v(env, policy, gamma)` — solve `(I − γ P_π) v = r_π` with `np.linalg.solve`.\n\nDropping terminating transitions from `P_π` is what makes terminal states worth 0 and keeps the system solvable even with γ = 1. **Run** shows v_π for the random policy and for a hand-written one, and how v_π(start) depends on γ.",
+  "hints": [
+    "Three nested loops: states `s`, actions `a`, and outcomes `(prob, s2, r, done)` in `env.P[s][a]`. The weight of an outcome under the policy is `policy[s, a] * prob`.",
+    "Every outcome adds `w * r` to `r_pi[s]`. Only outcomes with `done == False` add `w` to `P_pi[s, s2]`. Terminal and wall states only have `done=True` self-loops, so their rows stay zero and their value comes out 0.",
+    "`solve_v`: `P_pi, r_pi = policy_model(env, policy); return np.linalg.solve(np.eye(env.n_states) - gamma * P_pi, r_pi)`."
+  ],
+  "xp": 130,
+  "timeout": 20
+}

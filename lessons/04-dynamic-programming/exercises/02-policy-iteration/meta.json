@@ -1,0 +1,11 @@
+{
+  "title": "Policy iteration",
+  "prompt": "Evaluate, improve, repeat. `q_from_v` and `policy_evaluation` are provided.\n\n1. `policy_improvement(env, V, gamma, old_policy=None, tol=1e-9)` — return the **greedy** policy w.r.t. `V` as a one-hot `(n_states, n_actions)` array: in each state, the action with the largest `q_from_v(...)`. If `old_policy` is given and its action is within `tol` of the best, keep the old action.\n2. `policy_iteration(env, gamma, theta)` — start from the uniform random policy and alternate `V = policy_evaluation(env, policy, gamma, theta, V)` and `policy_improvement(..., old_policy=policy)` until the improved policy is **identical** to the old one. Return `(policy, V, iterations)`.\n\nThe check uses the classic 4×3 world from *Russell & Norvig* (slip 0.2, step −0.04) and shows how γ changes the optimal route. **Run** draws every evaluate → improve round.",
+  "hints": [
+    "`policy_improvement`: loop over states; `q = q_from_v(env, V, s, gamma)`; `best = int(np.argmax(q))`; then `new[s, best] = 1.0`.",
+    "Tie rule: `old_a = int(np.argmax(old_policy[s]))`; `if q[old_a] >= q[best] - tol: best = old_a`. Without it, two equally good actions can alternate forever and the loop never sees a stable policy.",
+    "`policy_iteration` loop: `iterations += 1; V = policy_evaluation(env, policy, gamma, theta, V); new = policy_improvement(env, V, gamma, old_policy=policy); if np.array_equal(new, policy): return policy, V, iterations; policy = new`."
+  ],
+  "xp": 140,
+  "timeout": 20
+}

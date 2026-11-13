@@ -1,0 +1,11 @@
+{
+  "title": "The agent loop",
+  "prompt": "Write `run_episode(env, policy, seed=None)` — the loop at the heart of every RL program.\n\n1. `obs, info = env.reset(seed=seed)`\n2. repeat: `action = policy(obs)`, then `obs, reward, terminated, truncated, info = env.step(action)`\n3. stop when `terminated or truncated`\n\nReturn a tuple `(total_reward, n_steps)`.\n\nThen implement `random_policy(obs)` returning a uniformly random action in `0..4` (Core Runner has 5 actions: UP, RIGHT, DOWN, LEFT, WAIT).\n\nThe demo measures the random baseline on Core Runner level 1 and records a replay.",
+  "hints": [
+    "Use a `while True:` loop and `break` once terminated or truncated is True.",
+    "Accumulate `total += reward` and `steps += 1` inside the loop.",
+    "random_policy can be `return random.randrange(5)`."
+  ],
+  "xp": 100,
+  "timeout": 20
+}

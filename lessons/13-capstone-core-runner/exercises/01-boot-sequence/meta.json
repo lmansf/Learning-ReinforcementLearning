@@ -1,0 +1,11 @@
+{
+  "title": "Mission 1 · Boot Sequence",
+  "prompt": "Write a reusable tabular Q-learning agent for Core Runner.\n\n1. `epsilon_by_episode(ep, episodes, eps_start, eps_end, decay_frac)` — linear decay from `eps_start` to `eps_end` over the first `decay_frac` fraction of training, then flat.\n2. `choose_action(Q, s, epsilon, rng)` — ε-greedy over the 5 actions (use `rng.random()` / `rng.integers(5)`; break ties randomly).\n3. `train_q(level, episodes, alpha, gamma, eps_start, eps_end, decay_frac, seed)` → returns `(Q, returns)` where `Q` has shape `(env.n_states, 5)` and `returns` is the list of per-episode returns.\n4. `greedy_policy(Q)` → a function `obs -> action` that always picks `argmax Q[obs]`.\n\nRemember the Q-learning target: **r** if the episode *terminated*, otherwise **r + γ · maxₐ Q(s′, a)**. A *truncated* episode (battery ran out) still bootstraps.\n\n**Pass:** the greedy policy scores at least **28.0** on level 1 (par 28).",
+  "hints": [
+    "The update is Q[s, a] += alpha * (target - Q[s, a]). Only the `terminated` flag removes the bootstrap term.",
+    "Tie-breaking: `best = np.flatnonzero(Q[s] == Q[s].max()); return int(rng.choice(best))`. With an all-zero table, plain argmax would always go UP.",
+    "epsilon_by_episode: `frac = min(1.0, ep / max(1, decay_frac * episodes)); return eps_start + frac * (eps_end - eps_start)`."
+  ],
+  "xp": 200,
+  "timeout": 60
+}

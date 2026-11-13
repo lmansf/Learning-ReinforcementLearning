@@ -1,0 +1,11 @@
+{
+  "title": "Mission 3 · Patrol Deck (design the state)",
+  "prompt": "On this mission you don't get a ready-made tabular state — you **design it**.\n\n1. `encode_state(env)` → one integer that captures everything needed to predict the future, built from `env.pos`, `env.collected` and the **sentry phase** `env.t % env.period`.\n2. `n_states_for(env)` → how many values your encoder can return.\n3. Finish the Q-learning loop in `train_patrol` (it calls your encoder after every step).\n\nRun the demo first: it trains the same agent twice — once with a *position-only* state that ignores the sentries, once with yours. Watch both replays.\n\n**Pass:** your encoder is collision-free and in range for every (position, cores, phase) combination, and the greedy agent scores ≥ **44** (par) on seeds 0 and 1.",
+  "hints": [
+    "Think of mixed-radix numbers: index = ((cell · n_masks) + mask) · period + phase, with cell = row · W + col and n_masks = 2 ** n_cores.",
+    "The cores bitmask: mask = sum(int(got) << i for i, got in enumerate(env.collected)). Phase is env.t % env.period — not env.t itself, or the table would be infinite.",
+    "n_states_for(env) = env.h * env.w * 2 ** len(env.core_list) * env.period. The loop body is the same as Mission 1, except s2 = encoder(env) instead of the observation."
+  ],
+  "xp": 250,
+  "timeout": 60
+}

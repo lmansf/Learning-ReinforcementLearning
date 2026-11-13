@@ -1,0 +1,11 @@
+{
+  "title": "TD(λ) with eligibility traces",
+  "prompt": "Implement the backward view of TD(λ): one TD error per step, credited to *every* recently visited state through a decaying **eligibility trace**.\n\n`td_lambda(env, policy, n_episodes, lam, alpha, gamma=1.0, init=0.0, V=None)` returns `V` (update the given array in place if passed). At the start of each episode set `e = np.zeros(env.n_states)`. After every step:\n\n1. `δ = r + γ·V[s2] − V[s]` (no `γ·V[s2]` term if `terminated`)\n2. `e[s] += 1` — accumulating trace\n3. `V += α·δ·e` — a vector update of **all** states\n4. `e *= γ·λ`\n\nThe check walks through the 3-step chain for λ = 0 (must equal TD(0)), λ = 0.5 and λ = 1 (equals MC here), then compares λ = 0.8 against λ = 0 on the 19-state random walk. **Run** sweeps α for several λ (cf. S&B Figure 12.6) and draws a trace decaying over time. Notice what happens at λ = 1 with a large α.",
+  "hints": [
+    "It is the TD(0) loop from lesson 6 with two extra lines: the trace bump before the update and the decay after. The update itself becomes a numpy vector operation over the whole `V`.",
+    "Order matters. Compute δ first (using the *old* V), then `e[s] += 1`, then `V += alpha * delta * e`, then `e *= gamma * lam`. Swap the bump and the update and the current state gets no credit for its own TD error.",
+    "while True:\n    s2, r, terminated, truncated, _ = env.step(policy(s))\n    delta = r + (0.0 if terminated else gamma * V[s2]) - V[s]\n    e[s] += 1.0\n    V += alpha * delta * e\n    e *= gamma * lam\n    if terminated or truncated: break\n    s = s2"
+  ],
+  "xp": 120,
+  "timeout": 30
+}

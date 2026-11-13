@@ -1,0 +1,12 @@
+{
+  "title": "Mission 4 · Deep Salvage (DQN)",
+  "prompt": "Every episode is a brand-new procedurally generated wreck. Train a **Deep Q-Network** that generalises.\n\nThe network (`MLP` with Adam), the n-step `ReplayBuffer`, the training loop and the evaluation are provided. You write the RL core:\n\n1. `epsilon_at(step, total_steps, explore_frac, eps_end)` — linear exploration schedule.\n2. `nstep_return(rewards, gamma)` → `(Σ γᵏ rₖ, γⁿ)`: the n-step return and the discount for its bootstrap.\n3. `double_dqn_targets(online, target, R, S2, D, disc)` → `R + disc · (1 − D) · Q_target(s′, argmaxₐ Q_online(s′, a))`.\n4. `huber_grad(pred, y)` → `clip(pred − y, −1, 1) / N`.\n5. The gradient step inside `train()`.\n\n**Workflow:** press **Run** to train (≈1–2 min on a laptop; raise the time limit in Settings → System if needed). It saves `deep_salvage.npz` to your workspace. Then press **Check**, which unit-tests your functions and evaluates the *saved* agent on 50 wrecks it has never seen.\n\n**Pass:** mean return ≥ **15** and extraction on ≥ **45%** of unseen wrecks. A hand-coded autopilot gets ~80% — can you beat it?",
+  "hints": [
+    "Double DQN decouples selection from evaluation: a_star = online.forward(S2).argmax(1); q_next = target.forward(S2)[np.arange(len(S2)), a_star].",
+    "Only the Q-values of the actions actually taken receive gradient: rows = np.arange(batch); grad = np.zeros_like(qs); grad[rows, A] = huber_grad(qs[rows, A], y).",
+    "If training collapses: lower lr (3e-4), longer exploration (explore_frac 0.5), or more total_steps (100k). Watch the replays of failures — getting stuck against walls means it needs more exploration."
+  ],
+  "xp": 400,
+  "timeout": 90,
+  "pretrain": true
+}

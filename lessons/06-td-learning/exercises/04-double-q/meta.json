@@ -1,0 +1,11 @@
+{
+  "title": "Double Q-learning vs maximisation bias",
+  "prompt": "In the MDP of Sutton & Barto Example 6.7, going LEFT from A leads to B, where every action pays Normal(−0.1, 1). LEFT is a bad idea on average — but the **max** of ten noisy estimates in B is almost always positive, so Q-learning is lured left.\n\n1. `double_q_update(Q1, Q2, s, a, r, s2, alpha, gamma, terminated, update_first)` — `Q1`, `Q2` are dicts `{state: array}`. If `update_first`: **select** `a* = argmax Q1[s2]`, **evaluate** it with `Q2[s2][a*]`, and update `Q1[s][a]` towards `r + γ·Q2[s2][a*]`. Otherwise do the mirror image, updating Q2. Terminal ⇒ target `r`. Return δ.\n2. `double_q_learning(env, n_episodes, alpha=0.1, gamma=1.0, epsilon=0.1, seed=0)` — create `rng = np.random.default_rng(seed)` and zero tables `{s: np.zeros(env.n_actions(s)) for s in range(env.n_states)}`. Act with `epsilon_greedy(Q1[s] + Q2[s], epsilon, rng)`, and each step flip a coin `rng.random() < 0.5` to choose which table to update. Return a list with one boolean per episode: was the action taken in `env.A` equal to `env.LEFT`?\n\nThe env, `epsilon_greedy` and a plain `q_learning_bias` with the same output format are provided. **Run** reproduces Figure 6.5.",
+  "hints": [
+    "The bias comes from using the *same* noisy numbers to both choose the best action and estimate its value. Two independent tables break that link: one chooses, the other judges.",
+    "A clean trick: `A, B = (Q1, Q2) if update_first else (Q2, Q1)`, then write the update once in terms of A (updated, selects) and B (evaluates).",
+    "Episode loop:\n\ns, _ = env.reset()\nwhile True:\n    a = epsilon_greedy(Q1[s] + Q2[s], epsilon, rng)\n    if s == env.A: went_left.append(a == env.LEFT)\n    s2, r, terminated, truncated, _ = env.step(a)\n    double_q_update(Q1, Q2, s, a, r, s2, alpha, gamma, terminated, rng.random() < 0.5)\n    if terminated or truncated: break\n    s = s2"
+  ],
+  "xp": 150,
+  "timeout": 30
+}

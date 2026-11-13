@@ -1,0 +1,11 @@
+{
+  "title": "Discounted return",
+  "prompt": "Implement two functions:\n\n- `discounted_return(rewards, gamma)` → the single number G₀ = Σ γᵏ rₖ₊₁ for a list of rewards `[R₁, R₂, …]`.\n- `returns_to_go(rewards, gamma)` → a list `[G₀, G₁, …, G_{T-1}]`, the return from *every* time step.\n\nFor `returns_to_go`, use the recursion **Gₜ = Rₜ₊₁ + γ Gₜ₊₁**, sweeping *backwards*. It is O(T) instead of O(T²) — and you will reuse this exact function for Monte Carlo and REINFORCE later.",
+  "hints": [
+    "discounted_return: loop with k = 0, 1, 2… and add gamma**k * rewards[k].",
+    "returns_to_go: start with G = 0 after the final step and walk the list in reverse.",
+    "G = 0; out = []; for r in reversed(rewards): G = r + gamma * G; out.append(G) — then reverse out."
+  ],
+  "xp": 100,
+  "timeout": 20
+}

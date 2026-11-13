@@ -1,0 +1,11 @@
+{
+  "title": "Linear values: gradient MC & semi-gradient TD(0)",
+  "prompt": "Implement the two workhorse prediction updates for a **linear** value function v̂(s, w) = wᵀx(s):\n\n- `v_hat(w, x)` — the dot product.\n- `gradient_mc_update(w, xs, rewards, alpha, gamma)` — for one finished episode, compute every return Gₜ and apply **w ← w + α [Gₜ − v̂(Sₜ, w)] x(Sₜ)** for each visited state.\n- `td0_update(w, x, r, x_next, terminated, alpha, gamma)` — one **semi-gradient TD(0)** step: target = r (if terminated) or r + γ v̂(S′, w); δ = target − v̂(S, w); **w ← w + α δ x(S)**. Return δ.\n\nUpdate `w` **in place** (numpy `+=`). The provided code runs both on the 1000-state random walk (Sutton & Barto Example 9.1) with *state aggregation*: 10 groups of 100 states, one weight per group. The check compares your learned values with the exact ones.",
+  "hints": [
+    "For a linear function the gradient ∇v̂(s, w) is simply the feature vector x(s), so every update has the shape `w += alpha * error * x`.",
+    "gradient_mc_update: first build the list of returns backwards (G = r + gamma * G), then loop over zip(xs, returns) and apply the update.",
+    "td0_update: `target = r if terminated else r + gamma * v_hat(w, x_next)`; `delta = target - v_hat(w, x)`; `w += alpha * delta * x`; `return delta`."
+  ],
+  "xp": 120,
+  "timeout": 40
+}

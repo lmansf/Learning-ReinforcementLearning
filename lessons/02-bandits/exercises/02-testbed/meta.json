@@ -1,0 +1,11 @@
+{
+  "title": "The 10-armed testbed",
+  "prompt": "One bandit run is noise. To compare algorithms honestly, Sutton & Barto average **hundreds of independent bandit problems**. Build that experiment.\n\n1. `run_testbed(make_agent, n_runs, n_steps, k, seed, nonstationary)` — for run `i`, create `KArmedBandit(k=k, seed=seed + i, nonstationary=nonstationary)` and `agent = make_agent(seed + i)`, then play `n_steps` of `act → pull → update`. Return `(avg_reward, pct_optimal)`, two arrays of length `n_steps` averaged over runs (`pct_optimal` in **percent**, measured against `bandit.optimal_action` before the pull).\n2. `compare_epsilons(epsilons, n_runs, n_steps, seed)` — return `{eps: run_testbed(...)}` using `EpsilonGreedyAgent(10, epsilon=eps, seed=s)` (already implemented above).\n\nThe check confirms the classic result: ε = 0.1 beats pure greedy. **Run** plots greedy vs ε = 0.01 vs ε = 0.1, optimistic initial values, and a nonstationary race between sample averages and constant α.",
+  "hints": [
+    "Allocate `rewards = np.zeros((n_runs, n_steps))` and the same for `optimal`; one row per run. At the end, `.mean(axis=0)` averages over runs.",
+    "Inside the run loop: `a = agent.act(); optimal[i, t] = a == bandit.optimal_action; r = bandit.pull(a); agent.update(a, r); rewards[i, t] = r`. Record optimality *before* pulling — a nonstationary bandit changes its best arm after each pull.",
+    "`compare_epsilons`: `results[eps] = run_testbed(lambda s, e=eps: EpsilonGreedyAgent(10, epsilon=e, seed=s), n_runs=n_runs, n_steps=n_steps, seed=seed)`. The `e=eps` default argument freezes the loop variable inside the lambda."
+  ],
+  "xp": 150,
+  "timeout": 40
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Build a tile coder",
+  "prompt": "Implement `TileCoder.active(x)`: return the index of the one active tile in **each** of the `n_tilings` tilings for a continuous point `x`.\n\nThe constructor has already prepared everything you need:\n- `self.low`, `self.high` — the box the state lives in\n- `self.tiles` — tiles per dimension; each tiling has `tiles + 1` per dimension so a shifted grid still covers the box (`self.shape`)\n- `self.offsets[i]` — how far tiling *i* is shifted, in units of one tile\n- `self.tiles_per_tiling` — size of each tiling's block of feature indices\n\nSteps: rescale so one tile has width 1, add each tiling's offset, `floor`, clip into the grid, flatten row-major, and add `i · tiles_per_tiling`.\n\nRun the demo to see how much each state *shares* with one point, and a sine wave fitted by plain linear SGD on tile features.",
+  "hints": [
+    "`scaled = (x - self.low) / (self.high - self.low) * self.tiles` — now 1 unit = 1 tile.",
+    "You can do all tilings at once: `coords = np.floor(scaled[None, :] + self.offsets).astype(int)` has shape (n_tilings, dims). Clip it with `np.clip(coords, 0, self.tiles)`.",
+    "`flat = np.ravel_multi_index(coords.T, self.shape)` then `return np.arange(self.n_tilings) * self.tiles_per_tiling + flat`."
+  ],
+  "xp": 120,
+  "timeout": 20
+}

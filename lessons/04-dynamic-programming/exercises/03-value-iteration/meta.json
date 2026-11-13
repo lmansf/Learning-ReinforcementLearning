@@ -1,0 +1,11 @@
+{
+  "title": "Value iteration on a slippery world",
+  "prompt": "Turn the Bellman **optimality** equation into an update and solve a slippery maze.\n\n`value_iteration(env, gamma, theta=1e-8, max_sweeps=10000)`:\n\n1. Start from `V = 0`. In each sweep, for every state set `V[s] = max(q_from_v(env, V, s, gamma))` **in place**, tracking `delta`, the largest change.\n2. Append each sweep's `delta` to a list; stop when `delta < theta` or after `max_sweeps` sweeps.\n3. Extract the greedy policy as a one-hot `(n_states, n_actions)` array.\n\nReturn `(V, policy, deltas)`. `q_from_v` is provided.\n\n**Run** solves a 10×5 maze where every move slips sideways 20% of the time, plots the convergence of Δ on a log scale, shows how good the greedy policy already is after only 3, 10 and 25 sweeps, and compares with the non-slippery version.",
+  "hints": [
+    "Value iteration is policy evaluation with the average over π replaced by a max over actions. The loop skeleton is the same as in exercise 1.",
+    "`for _ in range(max_sweeps): delta = 0.0; for s in range(env.n_states): v_new = q_from_v(env, V, s, gamma).max(); delta = max(delta, abs(v_new - V[s])); V[s] = v_new` then `deltas.append(delta)` and `if delta < theta: break`.",
+    "Policy extraction after the loop: `for s in range(env.n_states): policy[s, np.argmax(q_from_v(env, V, s, gamma))] = 1.0`."
+  ],
+  "xp": 140,
+  "timeout": 20
+}

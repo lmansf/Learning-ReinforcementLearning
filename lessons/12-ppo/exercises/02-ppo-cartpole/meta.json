@@ -1,0 +1,11 @@
+{
+  "title": "PPO on CartPole",
+  "prompt": "Build a compact **Proximal Policy Optimization** agent: an MLP actor and an MLP critic, rollouts of 512 steps, 4 epochs of minibatch updates per rollout.\n\nImplement:\n- `ppo_clip_loss(...)` — paste your solution from the previous exercise.\n- `ppo_update(actor, critic, actor_opt, critic_opt, batch, rng, ...)` — for each epoch, shuffle the batch and, for each minibatch:\n  1. normalise the advantages,\n  2. **actor**: logp = log π(a|s) from `softmax(actor.forward(obs))`; get `dlogp` from `ppo_clip_loss`; chain-rule into the logits with **dlogits = dlogp · (onehot − π)**; add `ent_coef * entropy_loss_grad(P)`; `actor_opt.step(actor.backward(dlogits))`,\n  3. **critic**: ½-MSE regression of `critic.forward(obs)` onto `returns · value_scale`,\n  4. record the approximate KL; return the mean KL of the last epoch.\n\nNetworks, Adam, GAE, the entropy gradient and the rollout loop are provided. The check runs one update on a synthetic batch, then trains for 80 000 steps (≈ 6 s) and requires a mean return ≥ 250.",
+  "hints": [
+    "Normalise: `adv = batch['advantages'][mb]; adv = (adv - adv.mean()) / (adv.std() + 1e-8)`. Rows for fancy indexing: `r = np.arange(len(mb))`, then `logp = np.log(P[r, act] + 1e-12)`.",
+    "`_, dlogp = ppo_clip_loss(logp, batch['logp_old'][mb], adv, clip_eps)`; `onehot = np.eye(P.shape[1])[act]`; `dlogits = dlogp[:, None] * (onehot - P) + ent_coef * entropy_loss_grad(P)`.",
+    "Critic: `v = critic.forward(obs); target = batch['returns'][mb][:, None] * value_scale; critic_opt.step(critic.backward((v - target) / len(mb)))`. KL: `lr_ = logp - batch['logp_old'][mb]; kls.append(np.mean(np.exp(lr_) - 1 - lr_))`."
+  ],
+  "xp": 300,
+  "timeout": 60
+}

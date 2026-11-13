@@ -1,0 +1,11 @@
+{
+  "title": "Advantage actor-critic on CartPole",
+  "prompt": "Train an **A2C** agent: a linear-softmax **actor** and a small neural-network **critic**, updated every 32 steps from GAE advantages.\n\nImplement:\n- `compute_gae(...)` — paste your solution from the previous exercise.\n- `actor_loss_grad(theta, X, A, adv)` — the gradient w.r.t. θ of the actor **loss** L = −mean(Âₜ log π(Aₜ|Sₜ)). It is the REINFORCE gradient from lesson 10 with a minus sign, because the optimiser minimises.\n- `critic_loss_grad(v_pred, targets)` — gradient of ½·mean(v_pred − target)² w.r.t. `v_pred` (shape `(N, 1)`).\n\nThe rollout loop, the time-limit bootstrap and both optimisers are provided — read them. The check trains for 250 000 steps (≈ 6 s) and requires a mean return ≥ 150. The demo also plots what the critic thinks V(s) looks like.",
+  "hints": [
+    "actor_loss_grad: `P = softmax(X @ theta)`, `onehot = np.eye(theta.shape[1])[A]`.",
+    "`return -X.T @ ((onehot - P) * adv[:, None]) / len(A)`.",
+    "critic_loss_grad: `return (v_pred - targets.reshape(-1, 1)) / len(v_pred)`."
+  ],
+  "xp": 200,
+  "timeout": 60
+}

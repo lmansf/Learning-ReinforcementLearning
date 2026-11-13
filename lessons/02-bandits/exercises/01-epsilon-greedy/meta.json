@@ -1,0 +1,11 @@
+{
+  "title": "An ε-greedy bandit agent",
+  "prompt": "Build the three pieces of a complete action-value bandit agent.\n\n1. `incremental_update(old, target, step_size)` — the update rule this whole course runs on: `old + step_size · (target − old)`.\n2. `epsilon_greedy(Q, epsilon, rng)` — with probability ε return a uniformly random arm (`rng.integers(len(Q))`); otherwise return a greedy arm, **breaking ties at random** among all arms that share the maximum.\n3. `EpsilonGreedyAgent.update(a, r)` — increment `N[a]`, pick the step size (`1 / N[a]` when `alpha is None`, otherwise `alpha`), and move `Q[a]` toward `r`.\n\n`rng` is a NumPy `Generator` (`np.random.default_rng(seed)`), so the agent is reproducible.\n\n**Run** plays 2000 steps on a 10-armed bandit and shows the estimates next to the hidden truth.",
+  "hints": [
+    "`incremental_update` is literally one line. In `epsilon_greedy`, draw `rng.random()` once: if it is below ε, explore.",
+    "To break ties: `best = np.flatnonzero(Q == Q.max())` gives the indices of every maximal arm; `rng.choice(best)` picks one. In `update`, increment `self.N[a]` *before* computing `1 / self.N[a]`.",
+    "`update`: `self.N[a] += 1; step = self.alpha if self.alpha is not None else 1.0 / self.N[a]; self.Q[a] = incremental_update(self.Q[a], r, step)`. Remember to wrap returned arms in `int(...)`."
+  ],
+  "xp": 120,
+  "timeout": 30
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Replay buffer & Huber loss",
+  "prompt": "Two small pieces that make DQN stable.\n\n**`ReplayBuffer`** — a circular buffer backed by pre-allocated numpy arrays.\n- `add(s, a, r, s2, terminated)`: write into slot `self.pos`, then advance `pos` modulo `capacity`; `size` grows until it hits `capacity`.\n- `sample(batch_size)`: draw indices uniformly from the *filled* part `[0, size)` with `self.rng` and return `(S, A, R, S2, D)`.\n\n**Huber loss** — quadratic for small errors, linear for large ones:\n- `huber(x, delta)` = ½x² if |x| ≤ δ, else δ(|x| − ½δ)\n- `huber_grad(x, delta)` = its derivative, which is just `clip(x, −δ, δ)`.\n\nThe demo shows how replay sampling breaks the correlation between neighbouring states, and plots Huber vs squared loss.",
+  "hints": [
+    "add: `i = self.pos; self.obs[i] = s; …; self.pos = (self.pos + 1) % self.capacity; self.size = min(self.size + 1, self.capacity)`.",
+    "sample: `idx = self.rng.integers(0, self.size, size=batch_size)` and index every array with the same `idx`.",
+    "huber: `a = np.abs(x); np.where(a <= delta, 0.5 * x**2, delta * (a - 0.5 * delta))`. huber_grad: `np.clip(x, -delta, delta)`."
+  ],
+  "xp": 120,
+  "timeout": 20
+}

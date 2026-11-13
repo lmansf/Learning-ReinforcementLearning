@@ -1,0 +1,11 @@
+{
+  "title": "n-step TD prediction",
+  "prompt": "Generalise TD(0) to look *n* rewards ahead before bootstrapping.\n\n1. `nstep_target(rewards, gamma, bootstrap)` → `Σᵢ γⁱ·rewards[i] + γᵏ·bootstrap` with `k = len(rewards)`.\n2. `nstep_td(env, policy, n_episodes, n, alpha, gamma=1.0, init=0.0, V=None)` → `V` (numpy array; update the given one in place if passed). Implement the algorithm of Sutton & Barto §7.1: store `states` and `rewards` as the episode unfolds (`rewards[0]` is a dummy so `rewards[i]` is Rᵢ). At time *t* the state from time **τ = t − n + 1** gets updated:\n   - `G = nstep_target(rewards[τ+1 : min(τ+n, T)+1], γ, V[states[τ+n]] if τ+n < T else 0)`\n   - `V[states[τ]] += α·(G − V[states[τ]])`\n   \n   Keep going after the episode ends (T = time of the last step) until τ = T − 1, so the last n − 1 states also get their update. Treat `terminated or truncated` as the end.\n\nThe check works through a 3-step chain by hand for several n (n = 1 must equal TD(0); n ≥ 3 must equal Monte Carlo), then reproduces the key result of Figure 7.2 on the 19-state random walk. **Run** draws the full figure.",
+  "hints": [
+    "Initialise `T = float('inf')` and `t = 0`. Each iteration: if `t < T`, take a step and append to `states`/`rewards`, setting `T = t + 1` when the episode ends. Then compute τ and update if τ ≥ 0. Break when `τ == T − 1`; otherwise `t += 1`.",
+    "Indices are the whole difficulty. The rewards that follow time τ are R_τ+1 … R_min(τ+n, T), i.e. the slice `rewards[tau + 1 : min(tau + n, T) + 1]`. Bootstrap from `V[states[tau + n]]` only if `tau + n < T` — otherwise the window already reaches the end of the episode. (Once T is set it is an int, so `min` returns an int you can slice with.)",
+    "if tau >= 0:\n    end = min(tau + n, T)\n    boot = V[states[tau + n]] if tau + n < T else 0.0\n    G = nstep_target(rewards[tau + 1:end + 1], gamma, boot)\n    V[states[tau]] += alpha * (G - V[states[tau]])\nif tau == T - 1: break\nt += 1"
+  ],
+  "xp": 150,
+  "timeout": 30
+}

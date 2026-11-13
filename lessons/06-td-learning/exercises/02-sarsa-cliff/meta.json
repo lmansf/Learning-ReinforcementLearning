@@ -1,0 +1,11 @@
+{
+  "title": "SARSA on the cliff",
+  "prompt": "Build on-policy TD control and watch it play it safe.\n\n1. `epsilon_greedy(Q, s, epsilon, rng)` — `Q` is a `(n_states, n_actions)` array. With probability ε return a random action, otherwise a greedy one, **breaking ties at random** (`rng.choice(np.flatnonzero(Q[s] == Q[s].max()))`). With an all-zero table, `np.argmax` alone would always pick UP.\n2. `sarsa_update(Q, s, a, r, s2, a2, alpha, gamma, terminated)` — in place, `Q[s,a] += α·(r + γ·Q[s2,a2] − Q[s,a])`; if `terminated` the target is just `r`. Return δ.\n3. `sarsa(env, n_episodes, alpha=0.5, gamma=1.0, epsilon=0.1, seed=0)` → `(Q, returns)`. Use `rng = np.random.default_rng(seed)` and `Q = np.zeros((env.n_states, env.n_actions))`. Per episode: choose A from S; then loop: step, choose A' from S', update, move on with `s, a = s2, a2`. Stop on `terminated or truncated`. `returns[i]` is episode *i*'s total reward.\n\n`greedy_rollout(env, Q)` is provided. The check trains on `CliffWalking` (5 seeds, α = 0.1) and expects the **safe** path (return −15 to −19), not the cliff-edge one.",
+  "hints": [
+    "The name is the update: S, A, R, S', A'. You must pick A' *before* updating, use it in the target, and then actually take it on the next step — do not pick a fresh action at the top of the loop.",
+    "Skeleton:\n\ns, _ = env.reset(); a = epsilon_greedy(Q, s, epsilon, rng); G = 0.0\nwhile True:\n    s2, r, terminated, truncated, _ = env.step(a); G += r\n    a2 = epsilon_greedy(Q, s2, epsilon, rng)\n    ...",
+    "...then `sarsa_update(Q, s, a, r, s2, a2, alpha, gamma, terminated)`; `if terminated or truncated: break`; `s, a = s2, a2`. After the loop, `returns.append(G)`. sarsa_update itself: `target = r if terminated else r + gamma * Q[s2, a2]; delta = target - Q[s, a]; Q[s, a] += alpha * delta; return delta`."
+  ],
+  "xp": 150,
+  "timeout": 30
+}

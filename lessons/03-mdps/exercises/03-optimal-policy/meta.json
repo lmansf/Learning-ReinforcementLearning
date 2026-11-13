@@ -1,0 +1,11 @@
+{
+  "title": "Optimal policies by brute force",
+  "prompt": "A finite MDP has finitely many deterministic policies, so in principle you can just try them all. Do that (once!) to see the optimality theory with your own eyes.\n\n1. `brute_force_optimal(env, gamma)` — loop over every assignment of an action to each state in `decision_states(env)` (`itertools.product`), turn it into a one-hot policy `np.eye(4)[actions]`, evaluate it exactly with the provided `solve_v`, and return `(actions, V)` of the policy with the **largest sum of state values**.\n2. `is_optimal(env, V, gamma, tol)` — return True iff `V(s) = maxₐ q(s, a)` (within `tol`) in every state, using the provided `q_from_v`. That is the Bellman optimality equation.\n\nThe check confirms that the winner equals v*, satisfies Bellman optimality, and dominates every other policy **in every state**. **Run** shows the optimal policy and the distribution of v(start) over all 4096 policies.",
+  "hints": [
+    "`decision_states(env)` gives the list of states that need an action. `itertools.product(range(env.n_actions), repeat=len(states))` yields every tuple of actions for them.",
+    "For each tuple: `actions = np.zeros(env.n_states, dtype=int); actions[states] = choice; v = solve_v(env, np.eye(env.n_actions)[actions], gamma)`. Keep it if `v.sum()` beats the best so far.",
+    "`is_optimal`: `return all(abs(V[s] - q_from_v(env, V, s, gamma).max()) <= tol for s in range(env.n_states))`."
+  ],
+  "xp": 120,
+  "timeout": 30
+}

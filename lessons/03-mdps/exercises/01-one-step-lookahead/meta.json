@@ -1,0 +1,11 @@
+{
+  "title": "One-step lookahead",
+  "prompt": "Turn state values into action values, and action values into a policy.\n\n1. `q_from_v(env, V, s, gamma)` — return an array with, for each action *a*,\n   `Σ prob · (r + γ · V[s'])` over the outcomes `(prob, s', r, terminated)` in `env.P[s][a]`. When `terminated` is True the episode is over: use just `r`.\n2. `q_table(env, V, gamma)` — stack `q_from_v` for every state into an `(n_states, n_actions)` array.\n3. `greedy_policy(Q)` — the argmax action of each row.\n\nThis lookahead is the inner loop of every planning algorithm in the next lesson. **Run** shows a value map with its greedy policy, and the four q-values at the start state.",
+  "hints": [
+    "`env.P[s][a]` is a short list of tuples. Two nested loops are enough: over `a in range(env.n_actions)`, then `for prob, s2, r, done in env.P[s][a]`.",
+    "Accumulate `q[a] += prob * (r + gamma * V[s2])`, but replace the `gamma * V[s2]` part with 0 when `done` is True. Terminal states themselves only have self-loops with reward 0 and done=True, so their q is 0 automatically.",
+    "`q[a] += prob * (r + (0.0 if done else gamma * V[s2]))`; `q_table` is `np.array([q_from_v(env, V, s, gamma) for s in range(env.n_states)])`; `greedy_policy` is `np.argmax(Q, axis=1)`."
+  ],
+  "xp": 100,
+  "timeout": 20
+}
