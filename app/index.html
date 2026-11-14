@@ -2,7 +2,8 @@
 <html lang="en" data-accent="cyan">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#05070b">
   <meta name="rs-token" content="__RS_TOKEN__">
   <title>Reward Signal</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 29 9.5v13L16 30 3 22.5v-13z' fill='%2307090d' stroke='%2339d0ff' stroke-width='2'/%3E%3Cpath d='M8 17h4l2-6 4 11 2-5h4' fill='none' stroke='%2339d0ff' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
@@ -10,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/hud.css">
+  <link rel="stylesheet" href="/css/mobile.css">
 </head>
 <body>
   <div class="fx-bg" aria-hidden="true"><div class="fx-grid"></div><div class="fx-glow"></div><div class="fx-scan"></div></div>
@@ -119,6 +121,39 @@
       <span class="sb-item dim" id="env-chips"></span>
       <span class="sb-item dim keys"><kbd>Ctrl ↵</kbd> run <kbd>Ctrl ⇧ ↵</kbd> check <kbd>[ ]</kbd> lessons <kbd>Esc</kbd> menu</span>
     </footer>
+
+    <!-- ============ MOBILE (≤ 900px): run bar, bottom tabs, keyboard accessory ============ -->
+    <div class="m-runbar" id="m-runbar">
+      <button class="btn primary" id="m-run"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg>RUN</button>
+      <button class="btn good" id="m-check"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>CHECK</button>
+      <button class="btn danger" id="m-stop" disabled aria-label="Stop"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg></button>
+      <div class="m-state"><span id="m-state-text">IDLE</span><span class="sb-bar" id="m-prog-bar" hidden><i id="m-prog"></i></span></div>
+    </div>
+    <nav class="mtabs" id="mtabs" aria-label="Sections">
+      <button data-m="lesson" class="on"><svg viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></svg><span>LESSON</span></button>
+      <button data-m="code"><svg viewBox="0 0 24 24"><path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 4l-4 16"/></svg><span>CODE</span></button>
+      <button data-m="output"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M12 15h5"/></svg><span>OUTPUT</span><b class="m-badge" id="m-badge" hidden></b></button>
+      <button data-m="missions"><svg viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M12 22V12M3 7l9 5 9-5"/></svg><span>MISSIONS</span></button>
+    </nav>
+    <div class="kbd-bar" id="kbd-bar" role="toolbar" aria-label="Code keys">
+      <button data-k="tab" aria-label="Indent">⇥</button>
+      <button data-k="untab" aria-label="Unindent">⇤</button>
+      <button data-k="left" aria-label="Cursor left">←</button>
+      <button data-k="right" aria-label="Cursor right">→</button>
+      <button data-k=":">:</button>
+      <button data-k="()">( )</button>
+      <button data-k="[]">[ ]</button>
+      <button data-k="{}">{ }</button>
+      <button data-k='""'>" "</button>
+      <button data-k="''">' '</button>
+      <button data-k="=">=</button>
+      <button data-k="_">_</button>
+      <button data-k="#">#</button>
+      <button data-k="undo" aria-label="Undo">↶</button>
+      <button data-k="run" class="kb-run" aria-label="Run">▶ RUN</button>
+      <button data-k="done" aria-label="Hide keyboard">⌄</button>
+    </div>
+    <div class="scrim" id="scrim"></div>
   </div>
 
   <!-- ============ OVERLAYS ============ -->
@@ -138,7 +173,7 @@
 
   <div class="overlay" id="palette" hidden>
     <div class="modal palette-modal">
-      <div class="palette-input"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg><input id="palette-input" placeholder="Jump to lesson, exercise or command…" spellcheck="false" autocomplete="off"></div>
+      <div class="palette-input"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg><input id="palette-input" placeholder="Jump to lesson, exercise or command…" spellcheck="false" autocomplete="off"><button class="icon-btn palette-close" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
       <div class="palette-list" id="palette-list"></div>
       <div class="palette-foot"><kbd>↑↓</kbd> navigate <kbd>↵</kbd> select <kbd>Esc</kbd> close</div>
     </div>

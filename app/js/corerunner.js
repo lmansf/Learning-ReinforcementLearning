@@ -299,7 +299,15 @@ export async function mountPlayable(host, { level = 1, api, store }) {
     </div>
     <div class="cr-brief" style="color:#b2bdcf;font-size:12.5px;margin:-4px 0 10px"></div>
     <div class="game-focus" tabindex="0"><div class="cr-view"></div></div>
-    <div class="game-help"><span><kbd>W A S D</kbd> / <kbd>↑ ← ↓ →</kbd> move</span><span><kbd>Space</kbd> wait</span><span><kbd>R</kbd> restart</span><span class="cr-best"></span></div>`;
+    <div class="game-pad" aria-label="Drone controls">
+      <button class="gp-up" data-a="0" aria-label="Up">▲</button>
+      <button class="gp-left" data-a="3" aria-label="Left">◀</button>
+      <button class="gp-wait" data-a="4" aria-label="Wait">WAIT</button>
+      <button class="gp-right" data-a="1" aria-label="Right">▶</button>
+      <button class="gp-down" data-a="2" aria-label="Down">▼</button>
+      <button class="gp-reset" data-a="r" aria-label="Restart">↻</button>
+    </div>
+    <div class="game-help"><span class="gh-keys"><kbd>W A S D</kbd> / <kbd>↑ ← ↓ →</kbd> move</span><span class="gh-keys"><kbd>Space</kbd> wait</span><span class="gh-keys"><kbd>R</kbd> restart</span><span class="gh-touch">Tap the pad or swipe on the map</span><span class="cr-best"></span></div>`;
   const focus = host.querySelector(".game-focus");
   const view = new GameView(host.querySelector(".cr-view"), { maxCell: 58 });
   const brief = host.querySelector(".cr-brief");
@@ -324,16 +332,36 @@ export async function mountPlayable(host, { level = 1, api, store }) {
   };
   host.querySelectorAll("[data-l]").forEach((b) => b.onclick = () => { load(b.dataset.l); focus.focus(); });
   const KEYS = { ArrowUp: 0, w: 0, W: 0, ArrowRight: 1, d: 1, D: 1, ArrowDown: 2, s: 2, S: 2, ArrowLeft: 3, a: 3, A: 3, " ": 4 };
-  focus.addEventListener("keydown", (e) => {
-    if (e.key === "r" || e.key === "R") { e.preventDefault(); if (!levels[cur].map) load(cur); else view.show(game.reset(), { animate: false }); return; }
-    if (!(e.key in KEYS) || !game) return;
-    e.preventDefault(); e.stopPropagation();
-    if (game.done) return;
-    const snap = game.step(KEYS[e.key]);
+  const restart = () => { if (!levels[cur].map) load(cur); else view.show(game.reset(), { animate: false }); };
+  const act = (a) => {
+    if (!game || game.done) return;
+    const snap = game.step(a);
     view.show(snap);
     if (game.done && snap.event === "escaped") {
       if (bests[cur] == null || snap.score > bests[cur]) { bests[cur] = snap.score; store.set("crBest", bests); showBest(); }
     }
+  };
+  focus.addEventListener("keydown", (e) => {
+    if (e.key === "r" || e.key === "R") { e.preventDefault(); restart(); return; }
+    if (!(e.key in KEYS) || !game) return;
+    e.preventDefault(); e.stopPropagation();
+    act(KEYS[e.key]);
+  });
+  // touch: on-screen D-pad + WAIT, and swipes on the map (a tap on a finished run restarts)
+  host.querySelector(".game-pad").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-a]");
+    if (!b) return;
+    if (b.dataset.a === "r") restart(); else act(+b.dataset.a);
+    if (navigator.vibrate && game?.done) navigator.vibrate(12);
+  });
+  let sw = null;
+  focus.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") sw = [e.clientX, e.clientY]; });
+  focus.addEventListener("pointerup", (e) => {
+    if (!sw) return;
+    const dx = e.clientX - sw[0], dy = e.clientY - sw[1];
+    sw = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) { if (game?.done) restart(); return; }
+    act(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0));
   });
   focus.addEventListener("focus", () => focus.classList.add("focused"));
   focus.addEventListener("blur", () => focus.classList.remove("focused"));

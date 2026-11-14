@@ -58,11 +58,36 @@ All algorithms are implemented from scratch in NumPy. PyTorch is optional.
   `Ctrl+S` exports the current file to `workspace/<lesson>/`.
 - Progress and code autosave in your browser. Back them up from Settings → Data.
 
+## Mobile apps (iOS and Android)
+
+`mobile/` packages the same HUD as store-ready iOS and Android apps with
+[Capacitor](https://capacitorjs.com). Phones cannot run `server.py`, so the apps run your
+Python **on the device** with [Pyodide](https://pyodide.org) (CPython 3.12 + NumPy in
+WebAssembly, bundled in the app, inside a Web Worker). `runtime/runner.py` and every
+check are used unchanged; lessons, checks and levels are exported to static JSON at build
+time. The apps work fully offline and collect no data.
+
+```bash
+cd mobile
+npm ci
+npm run build     # www/: app + lesson data + Pyodide 0.27.7 + NumPy + fonts (downloaded once, git-ignored)
+npm run verify    # offline phone-emulation test in headless Chromium, writes screenshots/
+npm run ios       # sync + open Xcode       (macOS)
+npm run android   # sync + open Android Studio
+```
+
+On screens up to 900 px wide (phones, also narrow desktop windows) the HUD switches to a
+mobile layout: LESSON / CODE / OUTPUT / MISSIONS tabs, a mission drawer, full-screen
+settings and palette, a code-key row above the on-screen keyboard and a D-pad for Core
+Runner. On-device Python is 2–7× slower than desktop CPython, so check time limits are
+scaled ×4 on device. Build, signing, store listing, privacy answers and the release
+checklist: [`mobile/STORE.md`](mobile/STORE.md). Privacy policy: [`mobile/PRIVACY.md`](mobile/PRIVACY.md).
+
 ## Project layout
 
 ```
 server.py            local server (stdlib only)
-app/                 HUD frontend (vanilla JS, no build step)
+app/                 HUD frontend (vanilla JS, no build step; js/runtime.js picks server or on-device Python)
 runtime/             modules importable from exercises:
   rlhud.py           visuals API
   rlenvs.py          bandit, GridWorld, CliffWalking, Blackjack, CartPole, MountainCar
@@ -71,6 +96,7 @@ runtime/             modules importable from exercises:
 lessons/             Markdown lessons + exercises (see AUTHORING.md)
 tools/validate.py    proves every solution passes and every starter does not
 workspace/           working directory for your runs and exported files
+mobile/              iOS + Android apps (Capacitor, Pyodide); see mobile/STORE.md
 ```
 
 ## Security

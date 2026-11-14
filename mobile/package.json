@@ -1,0 +1,36 @@
+{
+  "name": "reward-signal-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reward Signal for iOS and Android: the RL training ground with on-device Python (Pyodide).",
+  "type": "module",
+  "scripts": {
+    "fetch:pyodide": "node scripts/fetch-pyodide.mjs",
+    "build": "node scripts/build.mjs",
+    "assets": "node scripts/make-assets.mjs",
+    "sync": "npm run build && cap sync",
+    "serve": "node scripts/serve.mjs",
+    "bench": "node scripts/bench-pyodide.mjs",
+    "verify": "node scripts/verify.mjs",
+    "android": "npm run sync && cap open android",
+    "ios": "npm run sync && cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/ios": "8.5.3",
+    "@capacitor/keyboard": "8.0.6",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.5.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -4,10 +4,13 @@ import { CodeEditor } from "./editor.js";
 import { VisualBoard } from "./visuals.js";
 import { mountWidget } from "./widgets.js";
 import { escapeHtml } from "./highlight.js";
+import { createRuntime } from "./runtime.js";
+import { setupMobile, mobile } from "./mobile.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const TOKEN = document.querySelector('meta[name="rs-token"]').content;
+// desktop: server.py executes your code; mobile apps: Python runs on the device (Pyodide)
+const runtime = createRuntime();
 
 // ================================================================ storage
 const store = {
@@ -17,15 +20,7 @@ const store = {
   keys() { try { return Object.keys(localStorage).filter((k) => k.startsWith("rs:")).map((k) => k.slice(3)); } catch { return []; } },
 };
 
-async function api(path, body) {
-  const res = await fetch(path, {
-    method: body ? "POST" : "GET",
-    headers: { "X-RS-Token": TOKEN, ...(body ? { "Content-Type": "application/json" } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
-  return res.json();
-}
+const api = (path, body) => runtime.api(path, body);
 
 // ================================================================ settings
 const DEFAULTS = {
@@ -41,7 +36,7 @@ const DEFAULTS = {
   codeSize: 13.5,
   sound: true,
   volume: 0.35,
-  timeout: 120,
+  timeout: runtime.defaultTimeout,
 };
 let settings = { ...DEFAULTS, ...store.get("settings", {}) };
 function saveSettings() { store.set("settings", settings); applySettings(); }
@@ -152,7 +147,7 @@ function burst() {
   c.width = innerWidth * dpr; c.height = innerHeight * dpr; ctx.scale(dpr, dpr);
   const acc = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
   const cols = [acc, "#3ee6a0", "#ffb547", "#ffffff"];
-  const origin = $("#check-btn").getBoundingClientRect();
+  const origin = $(mobile.active() ? "#m-check" : "#check-btn").getBoundingClientRect();
   const ox = origin.left + origin.width / 2, oy = origin.top + origin.height / 2;
   const ps = Array.from({ length: 90 }, () => {
     const a = Math.random() * Math.PI * 2, s = 3 + Math.random() * 9;
@@ -428,7 +423,7 @@ function selectExercise(i, { focus = true } = {}) {
   renderBrief("task");
   clearOutput();
   refreshExCards();
-  if (focus) editor.focus();
+  if (focus && !mobile.active()) editor.focus(); // on phones, do not pop up the keyboard
 }
 
 function renderBrief(tab) {
@@ -567,44 +562,30 @@ async function execute(mode) {
   if (mode === "check" && !e.has_check) return;
   clearOutput();
   setDockTab(mode === "check" ? "checks" : "console");
-  const timeout = mode === "check" ? Math.max(settings.timeout, e.timeout || 60) : settings.timeout;
-  const controller = new AbortController();
-  running = { controller, mode, id: null, t0: performance.now(), checks: 0, result: null, errLines: [] };
+  // on-device Python is slower than a laptop's CPython: checks get proportionally more time
+  const timeout = mode === "check" ? Math.max(settings.timeout, (e.timeout || 60) * runtime.timeScale) : settings.timeout;
+  running = { mode, id: null, t0: performance.now(), checks: 0, result: null, errLines: [] };
+  const run = running;
   setRunUI(true, mode);
   sfx("run");
   con(`▸ ${mode === "check" ? "CHECKING" : "RUNNING"} ${e.scratch ? "scratchpad" : e.title} · python ${envInfo?.python || ""}\n`, "sys");
   let gotVisual = false;
+  mobile.onRun(mode);
+  const onMsg = (msg) => {
+    if (msg.t === "start") running.id = msg.id;
+    else if (msg.t === "out") con(msg.d);
+    else if (msg.t === "err") {
+      con(msg.d, "err");
+      const m = msg.d.match(/File "your_code\.py", line (\d+)/);
+      if (m) { running.errLines.push(+m[1]); editor.markError(running.errLines.slice(-1)); }
+    } else if (msg.t === "ev") handleEvent(msg.d, mode, () => { if (!gotVisual) { gotVisual = true; if (mode === "run" && settings.autoVisuals) setDockTab("visuals"); } });
+    else if (msg.t === "exit") finish(msg, mode);
+  };
   try {
-    const res = await fetch("/api/run", {
-      method: "POST", signal: controller.signal,
-      headers: { "X-RS-Token": TOKEN, "Content-Type": "application/json" },
-      body: JSON.stringify({ code: editor.value, mode, lesson: l.id, exercise: e.id, timeout }),
-    });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = "";
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      let nl;
-      while ((nl = buf.indexOf("\n")) >= 0) {
-        const line = buf.slice(0, nl); buf = buf.slice(nl + 1);
-        if (!line) continue;
-        let msg; try { msg = JSON.parse(line); } catch { continue; }
-        if (msg.t === "start") running.id = msg.id;
-        else if (msg.t === "out") con(msg.d);
-        else if (msg.t === "err") {
-          con(msg.d, "err");
-          const m = msg.d.match(/File "your_code\.py", line (\d+)/);
-          if (m) { running.errLines.push(+m[1]); editor.markError(running.errLines.slice(-1)); }
-        } else if (msg.t === "ev") handleEvent(msg.d, mode, () => { if (!gotVisual) { gotVisual = true; if (mode === "run" && settings.autoVisuals) setDockTab("visuals"); } });
-        else if (msg.t === "exit") finish(msg, mode);
-      }
-    }
+    await runtime.run({ code: editor.value, mode, lesson: l.id, exercise: e.id, timeout }, onMsg, run);
   } catch (err) {
-    if (err.name !== "AbortError") { con(`\n✕ ${err.message}\n`, "err"); setLink(false); }
+    con(`\n✕ ${err.message}\n`, "err");
+    if (err.link) setLink(false);
   } finally {
     setRunUI(false);
     running = null;
@@ -689,15 +670,14 @@ function setRunUI(on, mode) {
 
 async function stopRun() {
   if (!running) return;
-  if (running.id) await api("/api/stop", { id: running.id }).catch(() => {});
-  else running.controller.abort();
+  await runtime.stop(running);
 }
 
 async function exportCode() {
   const l = curLesson(), e = curEx();
   try {
-    const r = await api("/api/save", { lesson: l.id, exercise: e.id === SCRATCH.id ? "scratch" : e.id, code: editor.value });
-    toast({ title: "EXPORTED", text: r.path, icon: "save", dur: 5000 });
+    const r = await runtime.exportCode({ lesson: l.id, exercise: e.id === SCRATCH.id ? "scratch" : e.id, code: editor.value });
+    if (!r.cancelled) toast({ title: "EXPORTED", text: r.text, icon: "save", dur: 5000 });
   } catch (err) { toast({ kind: "bad", title: "EXPORT FAILED", text: err.message, icon: "x" }); }
 }
 
@@ -773,7 +753,7 @@ function renderSettingsPane(tab) {
   } else if (tab === "system") {
     const p = envInfo?.packages || {};
     html = `<div class="set-group">EXECUTION</div>` +
-      row("Run time limit", "Seconds before a Run is stopped. Checks use the larger of this and the exercise's own limit.", range("timeout", 10, 900, 10, "s")) +
+      row("Run time limit", "Seconds before a Run is stopped. Checks use the larger of this and the exercise's own limit.", range("timeout", 10, runtime.kind === "pyodide" ? 1800 : 900, 10, "s")) +
       `<div class="set-group">PYTHON ENVIRONMENT</div>
       <table class="env-table">
         <tr><td>Interpreter</td><td>${escapeHtml(envInfo?.executable || "?")}</td></tr>
@@ -782,7 +762,9 @@ function renderSettingsPane(tab) {
         ${Object.entries(p).map(([k, v]) => `<tr><td>${k}</td><td style="color:${v ? "var(--good)" : "var(--dim)"}">${v ? escapeHtml(String(v)) : "not installed"}</td></tr>`).join("")}
         <tr><td>Workspace</td><td>${escapeHtml(envInfo?.workspace || "?")}</td></tr>
       </table>
-      <div class="set-note">Your code runs with the interpreter that started <code>server.py</code>, with the working directory set to the workspace folder. Only <code>numpy</code> is required. To try the optional PyTorch / Gymnasium extras: <code>pip install torch gymnasium</code>, then restart the server.</div>`;
+      ${runtime.kind === "pyodide"
+        ? `<div class="set-note">Your code runs entirely on this device: Python and NumPy compiled to WebAssembly (Pyodide), bundled with the app. Nothing is uploaded and no network is needed. Files your code writes (for example trained weights) stay in the on-device workspace. On-device Python is slower than a laptop, so exercise checks get ${runtime.timeScale}× their desktop time limit. PyTorch and Gymnasium are not available on mobile; every exercise needs only NumPy.</div>`
+        : `<div class="set-note">Your code runs with the interpreter that started <code>server.py</code>, with the working directory set to the workspace folder. Only <code>numpy</code> is required. To try the optional PyTorch / Gymnasium extras: <code>pip install torch gymnasium</code>, then restart the server.</div>`}`;
   } else if (tab === "data") {
     const nCode = store.keys().filter((k) => k.startsWith("code:")).length;
     html = `<div class="set-group">PROGRESS</div>` +
@@ -800,9 +782,8 @@ function renderSettingsPane(tab) {
   $("#test-sound", pane)?.addEventListener("click", () => sfx("pass"));
   $("#exp-prog", pane)?.addEventListener("click", () => {
     const dump = {}; store.keys().forEach((k) => (dump[k] = store.get(k)));
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(dump, null, 1)], { type: "application/json" }));
-    a.download = `reward-signal-progress-${new Date().toISOString().slice(0, 10)}.json`; a.click();
+    runtime.saveFile(`reward-signal-progress-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(dump, null, 1), "application/json")
+      .catch((e) => toast({ kind: "bad", title: "EXPORT FAILED", text: e.message, icon: "x" }));
   });
   $("#imp-prog", pane)?.addEventListener("click", () => $("#imp-file", pane).click());
   $("#imp-file", pane)?.addEventListener("change", async (ev) => {
@@ -873,6 +854,7 @@ function choosePalette(i) { const it = palItems[i]; $("#palette").hidden = true;
 
 // ================================================================ layout
 function toggleRail() {
+  if (mobile.active()) return mobile.toggleDrawer();
   const m = $("#main");
   m.classList.toggle("rail-collapsed");
   store.set("railCollapsed", m.classList.contains("rail-collapsed"));
@@ -934,12 +916,13 @@ function setupKeys() {
 // ================================================================ link / boot
 function setLink(ok) {
   $("#link-dot").className = "dot " + (ok ? "on" : "off");
-  $("#link-text").textContent = ok ? "LINK" : "NO LINK — IS server.py RUNNING?";
+  $("#link-text").textContent = ok ? (runtime.kind === "pyodide" ? "ON-DEVICE" : "LINK") : runtime.offlineText;
 }
 function renderEnvChips() {
   const p = envInfo.packages;
   const chip = (name, v) => `<span class="env-chip ${v ? "ok" : "no"}" title="${name} ${v || "not installed"}">${name.toUpperCase()}${v ? " " + String(v).split("+")[0] : ""}</span>`;
-  $("#env-chips").innerHTML = `<span class="env-chip ok">PY ${envInfo.python}</span>${chip("numpy", p.numpy)}${chip("torch", p.torch)}${chip("gymnasium", p.gymnasium)}`;
+  $("#env-chips").innerHTML = `<span class="env-chip ok">PY ${envInfo.python}</span>${chip("numpy", p.numpy)}` +
+    (runtime.kind === "pyodide" ? `<span class="env-chip ok">PYODIDE ${escapeHtml(envInfo.pyodide || "")}</span>` : `${chip("torch", p.torch)}${chip("gymnasium", p.gymnasium)}`);
 }
 async function heartbeat() {
   try { await api("/api/env"); setLink(true); } catch { setLink(false); }
@@ -953,7 +936,7 @@ async function boot() {
     [envInfo, { lessons }] = await Promise.all([api("/api/env"), api("/api/lessons")]);
   } catch (e) {
     $("#boot").classList.add("error");
-    sub.textContent = "Could not reach the local server. Start it with: python server.py";
+    sub.textContent = runtime.bootError;
     return;
   }
   sub.textContent = `Loaded ${lessons.length} missions`;
@@ -966,6 +949,7 @@ async function boot() {
   setLink(true);
   setupResizers();
   setupKeys();
+  setupMobile({ editor, execute, stopRun, closeOverlays });
 
   // wire controls
   $("#run-btn").onclick = () => execute("run");
@@ -984,7 +968,13 @@ async function boot() {
   $("#brief-collapse").onclick = () => { $("#brief").classList.toggle("collapsed"); store.set("briefCollapsed", $("#brief").classList.contains("collapsed")); };
   if (store.get("briefCollapsed", false)) $("#brief").classList.add("collapsed");
   $$(".overlay").forEach((o) => o.addEventListener("click", (e) => { if (e.target === o || e.target.closest("[data-close]")) closeOverlays(); }));
-  setInterval(heartbeat, 10000);
+  if (runtime.kind === "server") setInterval(heartbeat, 10000);
+  else runtime.onStatus((status, env) => {
+    // on-device Python boots in the background; the HUD is usable meanwhile
+    $("#link-dot").className = "dot " + (status === "ready" ? "on" : status === "error" ? "off" : "");
+    $("#link-text").textContent = status === "ready" ? "PYTHON ON-DEVICE" : status === "error" ? "PYTHON FAILED TO START" : "PYTHON BOOTING…";
+    if (env) { envInfo = env; renderEnvChips(); }
+  });
 
   const last = store.get("lastLesson", lessons[0]?.id);
   openLesson(lessonById(last) ? last : lessons[0].id);
@@ -992,7 +982,8 @@ async function boot() {
   requestAnimationFrame(() => $("#boot").classList.add("gone"));
   if (!store.get("welcomed", false)) {
     store.set("welcomed", true);
-    setTimeout(() => toast({ title: "WELCOME, OPERATOR", text: "Ctrl+K jumps anywhere. Esc opens settings.", icon: "spark", dur: 6000 }), 900);
+    const touch = mobile.active() || matchMedia("(pointer: coarse)").matches;
+    setTimeout(() => toast({ title: "WELCOME, OPERATOR", text: touch ? "LESSON to read, CODE to write, OUTPUT for results. MISSIONS opens the course map." : "Ctrl+K jumps anywhere. Esc opens settings.", icon: "spark", dur: 6000 }), 900);
   }
 }
 

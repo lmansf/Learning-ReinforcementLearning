@@ -116,6 +116,11 @@ Chapters used by the curriculum (keep these exact strings so the nav groups corr
 `timeout` is seconds for the *check* run. Keep solutions comfortably under 60 % of it on
 an ordinary laptop. Most exercises should check in < 10 s; deep-RL ones may take up to ~90 s.
 
+The mobile apps run checks in Pyodide (WebAssembly), 2–4× slower than CPython for NumPy-heavy
+code, and multiply `timeout` by 4 on device. After adding a heavy exercise, measure it with
+`cd mobile && npm run bench -- <lesson>/<exercise>` and rebuild the apps (`npm run build`).
+Exercises must not need threads, subprocesses or network access (none of these exist on device).
+
 ### starter.py / solution.py
 
 - Put the functions/classes to implement at the top, with docstrings and `# TODO` markers.
