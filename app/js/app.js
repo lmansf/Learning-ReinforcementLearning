@@ -192,6 +192,8 @@ function confirmDialog({ title, text, yes = "CONFIRM", kicker = "CONFIRM" }) {
 
 // ================================================================ state
 let lessons = [];
+let docs = [];
+let guide = null; // active type-along state
 let envInfo = null;
 let cur = { lesson: null, exIdx: 0 };
 let editor = null;
@@ -420,7 +422,8 @@ function selectExercise(i, { focus = true } = {}) {
   $("#ex-tabs .ex-tab.on")?.scrollIntoView({ inline: "nearest", block: "nearest" });
   $("#ex-reward").innerHTML = e.scratch ? `<span class="dim">NO CHECKS</span>` : isPassed(l.id, e.id) ? `<span class="done">✓ COMPLETE</span>` : `<span>${e.xp} XP</span>`;
   // editor
-  editor.value = store.get(draftKey(l.id, e.id), e.starter);
+  setupGuided(e, store.get(draftKey(l.id, e.id), null));
+  if (!e.guided) editor.value = store.get(draftKey(l.id, e.id), e.starter);
   setSaveState(true);
   $("#check-btn").disabled = !e.has_check;
   $("#check-btn").title = e.has_check ? "Check (Ctrl+Shift+Enter)" : "No automated checks for this file";
@@ -435,10 +438,17 @@ function renderBrief(tab) {
   const l = curLesson(), e = curEx();
   const body = $("#brief-body");
   const key = exKey(l.id, e.id);
+  $("#doc-count").textContent = String(docsFor(e).length || "");
   $("#hint-count").textContent = e.hints?.length ? `${Math.min(progress.hints[key] || 0, e.hints.length)}/${e.hints.length}` : "";
   $$("#brief-tabs button[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
   if (tab === "task") {
-    body.innerHTML = `<div class="ex-h">${escapeHtml(e.title)}</div>${renderMarkdown(e.prompt || "").html}`;
+    const kit = docsFor(e).filter((d) => d.topic !== "Python").slice(0, 14);
+    const walk = curLesson().exercises.find((x) => x.guided && x.id !== e.id);
+    body.innerHTML = `<div class="ex-h">${escapeHtml(e.title)}</div>${renderMarkdown(e.prompt || "").html}` +
+      (kit.length ? `<div class="toolkit"><span class="label">TOOLKIT</span>${kit.map((d) => `<button class="tk-chip" data-doc="${escapeHtml(d.title)}">${escapeHtml(d.title)}</button>`).join("")}
+        ${walk ? `<span class="tk-note">Practised in <a data-walk>${escapeHtml(walk.title)}</a></span>` : ""}</div>` : "");
+    body.querySelectorAll("[data-doc]").forEach((c) => c.onclick = () => lookupDocs(c.dataset.doc));
+    body.querySelector("[data-walk]")?.addEventListener("click", () => selectExercise(curLesson().exercises.indexOf(walk)));
     hydrateMini(body);
     return;
   }
@@ -452,6 +462,17 @@ function renderBrief(tab) {
     hydrateMini(body);
     return;
   }
+  if (tab === "docs") { renderDocs(body, e); return; }
+  if (tab === "task" && e.guided) {
+    const g = parseGuided(e.guided);
+    const notes = g.filter((x) => x.note && !x.given);
+    body.innerHTML = `<div class="ex-h">${escapeHtml(e.title)}</div>${renderMarkdown(e.prompt || "").html}
+      <div class="label dim" style="margin-top:12px">WALKTHROUGH NOTES · READ AHEAD OR FOLLOW LINE BY LINE</div>
+      <ol class="walk-notes">${notes.map((x) => `<li><span class="ln">L${x.n}</span>${renderMarkdown(x.note).html.replace(/^<p>|<\/p>$/g, "")}</li>`).join("")}</ol>`;
+    hydrateMini(body);
+    return;
+  }
+  if (tab === "solution" && e.guided) { body.innerHTML = `<div class="locked"><span class="label">NOTHING HIDDEN</span>In a type-along the full code is on screen as ghost text. The next exercise is where you go solo.</div>`; return; }
   if (tab === "solution") {
     const passed = isPassed(l.id, e.id);
     const mode = settings.solutions;
@@ -497,7 +518,143 @@ function sendToScratch(code) {
 }
 
 let saveTimer = null;
+// ================================================================ type-along (guided) exercises
+// guided.py format: `#> note` lines annotate the next code line; lines between `#= given` and `#= end`
+// are provided (filled in automatically). Everything else is typed by the learner.
+function parseGuided(src) {
+  const out = [];
+  let note = [], given = false;
+  for (const raw of src.replace(/\s+$/, "").split("\n")) {
+    const m = raw.match(/^\s*#>\s?(.*)$/);
+    if (m) { note.push(m[1]); continue; }
+    if (/^\s*#=\s*given/.test(raw)) { given = true; continue; }
+    if (/^\s*#=\s*end/.test(raw)) { given = false; continue; }
+    out.push({ text: raw.replace(/\s+$/, ""), given, note: note.length ? note.join(" ") : null, n: out.length + 1 });
+    note = [];
+  }
+  return out;
+}
+
+function givenRun(lines, i) {
+  // the provided lines starting at index i (possibly empty), plus blank lines between them
+  const run = [];
+  while (i < lines.length && (lines[i].given || (!lines[i].text.trim() && lines[i + 1]?.given))) run.push(lines[i++].text);
+  return run;
+}
+
+function setupGuided(e, draft) {
+  if (!e.guided) { guide = null; editor.setGhost(null); $("#guide-bar").hidden = true; return; }
+  const lines = parseGuided(e.guided);
+  guide = { e, lines, target: lines.map((x) => x.text), done: false, lastNote: 0 };
+  $("#guide-bar").hidden = false;
+  editor.setGhost(guide.target);
+  if (draft != null) editor.value = draft;
+  else {
+    const pre = givenRun(lines, 0);
+    editor.value = pre.length ? pre.join("\n") + "\n" + indentOf(lines[pre.length]?.text || "") : "";
+    const end = editor.value.length; editor.ta.setSelectionRange(end, end);
+  }
+  updateGuide();
+}
+const indentOf = (t) => (t.match(/^\s*/) || [""])[0];
+
+function guideKey(ev, ed) {
+  if (ev.key === "F1" || ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "i")) { lookupDocs(ed.wordAtCursor()); return true; }
+  if (!guide) return false;
+  if ((ev.ctrlKey || ev.metaKey) && ev.shiftKey && ev.code === "Space") { fillLine(); return true; }
+  if (ev.key !== "Enter" || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return false;
+  const v = ed.value, lines = v.split("\n");
+  const i = ed.caretLine();
+  const t = guide.lines;
+  if (i >= t.length || lines[i].replace(/\s+$/, "") !== t[i].text) return false; // not finished: normal Enter
+  const caretAtEnd = ed.ta.selectionStart === v.split("\n").slice(0, i + 1).join("\n").length;
+  if (!caretAtEnd) return false;
+  if (lines.length > i + 1 && lines.slice(i + 1).some((x) => x.trim())) return false; // editing mid-file
+  const run = givenRun(t, i + 1);
+  const next = t[i + 1 + run.length];
+  ed.insert("\n" + (run.length ? run.join("\n") + "\n" : "") + (next ? indentOf(next.text) : ""));
+  return true;
+}
+
+function fillLine() {
+  if (!guide) return;
+  const ed = editor, lines = ed.value.split("\n");
+  let i = lines.findIndex((x, k) => k < guide.target.length && x.replace(/\s+$/, "") !== guide.target[k]);
+  if (i < 0) i = lines.length - 1;
+  const start = lines.slice(0, i).join("\n").length + (i ? 1 : 0);
+  ed.ta.focus();
+  ed.ta.setSelectionRange(start, start + (lines[i] || "").length);
+  ed.insert(guide.target[i] || "");
+  guide.filled = (guide.filled || 0) + 1;
+}
+
+function updateGuide() {
+  if (!guide) return;
+  const lines = editor.value.split("\n").map((x) => x.replace(/\s+$/, ""));
+  const t = guide.lines;
+  const typedTotal = t.filter((x) => !x.given && x.text.trim()).length;
+  let ok = 0;
+  t.forEach((x, k) => { if (!x.given && x.text.trim() && lines[k] === x.text) ok++; });
+  const complete = t.every((x, k) => (lines[k] ?? "") === x.text) && !lines.slice(t.length).some((x) => x.trim());
+  $("#gb-prog").textContent = `${ok}/${typedTotal} LINES`;
+  $("#gb-fill").style.width = (typedTotal ? (100 * ok) / typedTotal : 100) + "%";
+  const note = $("#gb-note");
+  const cur = Math.min(editor.caretLine(), t.length - 1);
+  if (complete) {
+    note.className = "gb-note done";
+    note.innerHTML = "<span class='ln'>DONE</span>Transcription complete. Press <b>RUN</b> to see it work, then <b>CHECK</b> — and try changing things to see what breaks.";
+    if (!guide.done) { guide.done = true; sfx("right"); toast({ kind: "good", title: "TRANSCRIPTION COMPLETE", text: "Run it, then Check it.", icon: "check" }); }
+    return;
+  }
+  guide.done = false;
+  const firstBad = [...(editor.mismatches || [])].sort((a, b) => a - b)[0];
+  if (firstBad) {
+    note.className = "gb-note warn";
+    note.innerHTML = `<span class="ln">L${firstBad}</span>This line doesn't match the walkthrough yet — compare it with the ghost text (spacing and brackets count).`;
+    return;
+  }
+  // show the note of the current line, or the closest note above it in the same block
+  let k = cur;
+  while (k > 0 && !t[k]?.note && cur - k < 8) k--;
+  const x = t[k]?.note ? t[k] : t[cur];
+  note.className = "gb-note";
+  note.innerHTML = x?.note ? `<span class="ln">L${x.n}</span>${renderMarkdown(x.note).html.replace(/^<p>|<\/p>$/g, "")}` : `<span class="ln">L${cur + 1}</span><span class="dim">Keep typing — follow the ghost text.</span>`;
+}
+
+// ================================================================ API reference (DOCS tab)
+function exerciseText(e) { return [e.starter, e.solution, e.guided].filter(Boolean).join("\n"); }
+function docsFor(e) {
+  if (!e || e.scratch) return [];
+  const text = exerciseText(e);
+  return docs.filter((d) => d.match.some((m) => text.includes(m)));
+}
+let docQuery = "";
+function renderDocs(body, e) {
+  const rel = docsFor(e);
+  const q = docQuery.trim().toLowerCase();
+  const pool = q ? docs.filter((d) => (d.title + " " + d.sig + " " + d.topic + " " + d.tags.join(" ")).toLowerCase().includes(q)) : rel;
+  const card = (d, open) => `<details class="doc${open ? " hit" : ""}" ${open ? "open" : ""}><summary><span class="dt">${escapeHtml(d.title)}</span><span class="ds">${escapeHtml(d.sig)}</span><span class="dtopic">${escapeHtml(d.topic.toUpperCase())}</span></summary><div class="db">${renderMarkdown(d.body).html}</div></details>`;
+  const groups = {};
+  pool.forEach((d) => (groups[d.topic] = groups[d.topic] || []).push(d));
+  body.innerHTML = `<div class="docs-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg><input id="docs-q" placeholder="Search the reference (np.argmax, env.step, rlhud.plot…) — or press F1 on a word in the editor" value="${escapeHtml(docQuery)}" spellcheck="false"></div>
+    ${q ? "" : `<div class="label dim">${rel.length ? `USED IN THIS EXERCISE · ${rel.length}` : "NO REFERENCE ENTRIES MATCH THIS EXERCISE — SEARCH ABOVE"}</div>`}
+    ${Object.entries(groups).map(([t, ds]) => `<div class="docs-group">${escapeHtml(t.toUpperCase())}</div>${ds.map((d) => card(d, q && d.title.toLowerCase() === q)).join("")}`).join("") || (q ? `<div class="locked">No entry for “${escapeHtml(docQuery)}”.</div>` : "")}`;
+  hydrateMini(body);
+  const inp = $("#docs-q", body);
+  inp.oninput = () => { docQuery = inp.value; const pos = inp.selectionStart; renderDocs(body, e); const n = $("#docs-q", body); n.focus(); n.setSelectionRange(pos, pos); };
+}
+function lookupDocs(word) {
+  if (!word) return;
+  const w = word.toLowerCase();
+  const exact = docs.find((d) => d.title.toLowerCase() === w) || docs.find((d) => d.title.toLowerCase().endsWith("." + w.split(".").pop())) ;
+  docQuery = exact ? exact.title : word;
+  $("#brief").classList.remove("collapsed");
+  renderBrief("docs");
+}
+
 function onEdit(v) {
+  if (guide && !guide.autoCollapsed) { guide.autoCollapsed = true; $("#brief").classList.add("collapsed"); }
+  updateGuide();
   setSaveState(false);
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
@@ -960,7 +1117,14 @@ async function boot() {
   board = new VisualBoard($("#visuals"), { onCount: (n) => ($("#vis-count").textContent = n ? String(n) : "") });
   $("#console").dataset.empty = "PRESS RUN (CTRL+ENTER) TO EXECUTE YOUR CODE";
   $("#checks").dataset.empty = "PRESS CHECK (CTRL+SHIFT+ENTER) TO TEST YOUR SOLUTION";
-  editor = new CodeEditor($("#editor"), { onChange: onEdit });
+  editor = new CodeEditor($("#editor"), { onChange: onEdit, onKey: guideKey });
+  ["keyup", "click"].forEach((ev) => editor.ta.addEventListener(ev, () => guide && updateGuide()));
+  $("#gb-fill-line").onclick = () => { fillLine(); editor.focus(); };
+  $("#gb-restart").onclick = async () => {
+    if (!guide || !(await confirmDialog({ title: "RESTART WALKTHROUGH?", text: "Clears what you typed for this type-along.", yes: "RESTART" }))) return;
+    const l = curLesson(); store.del(draftKey(l.id, guide.e.id)); setupGuided(guide.e, null); editor.focus();
+  };
+  api("/api/docs").then((r) => { docs = r.docs || []; if (curLesson()) $("#doc-count").textContent = String(docsFor(curEx()).length || ""); }).catch(() => {});
   applySettings();
   renderEnvChips();
   setLink(true);

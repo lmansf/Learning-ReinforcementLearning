@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · Your first rollout",
+  "prompt": "**Type the code yourself, line by line.** The ghost text in the editor shows what to write next, and the note above the editor explains the line you're on. Provided blocks fill in automatically when you press Enter at the end of a line.\n\nYou'll meet the four patterns every later exercise relies on:\n\n- a **policy** as a plain Python function\n- the **`reset` → `step` loop** with `terminated` / `truncated`\n- collecting rewards in a list\n- a **vectorised NumPy** calculation (powers of γ via broadcasting)\n\nPress **F1** on any word (e.g. `np.arange`) to open its reference in the **DOCS** tab. When you're done: **Run**, then **Check**. The next two exercises use the same tools with no ghost text.",
+  "hints": [],
+  "xp": 50,
+  "timeout": 20
+}

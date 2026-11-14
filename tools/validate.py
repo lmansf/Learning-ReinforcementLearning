@@ -83,6 +83,22 @@ def main():
             timeout = int(meta.get("timeout", 60))
             chk = os.path.join(ep, "check.py")
             sol, sta = os.path.join(ep, "solution.py"), os.path.join(ep, "starter.py")
+            gpath = os.path.join(ep, "guided.py")
+            if os.path.isfile(gpath):
+                # type-along exercise: solution = the script minus notes; starter defaults to empty
+                sys.path.insert(0, ROOT)
+                from server import strip_guided
+                tmp = os.path.join(ROOT, "workspace", f".guided_{lname}_{ex}")
+                os.makedirs(tmp, exist_ok=True)
+                if not os.path.isfile(sol):
+                    sol = os.path.join(tmp, "solution.py")
+                    open(sol, "w", encoding="utf-8").write(strip_guided(open(gpath, encoding="utf-8").read()))
+                if not os.path.isfile(sta):
+                    sta = os.path.join(tmp, "starter.py")
+                    open(sta, "w", encoding="utf-8").write("")
+                bad = [i + 1 for i, l in enumerate(open(gpath, encoding="utf-8").read().splitlines()) if "\t" in l]
+                if bad:
+                    print(f"  ✗ {ex}: guided.py uses tabs on lines {bad[:5]} (use 4 spaces)"); failures += 1; continue
             if not (os.path.isfile(sol) and os.path.isfile(sta)):
                 print(f"  ✗ {ex}: starter.py/solution.py missing"); failures += 1; continue
             if not os.path.isfile(chk):

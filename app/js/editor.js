@@ -5,18 +5,22 @@ import { highlightPython } from "./highlight.js";
 const INDENT = "    ";
 
 export class CodeEditor {
-  constructor(host, { onChange } = {}) {
+  constructor(host, { onChange, onKey } = {}) {
     this.host = host;
     this.onChange = onChange || (() => {});
+    this.onKeyHook = onKey || null;   // (event, editor) => true if handled
+    this.ghost = null;                // array of target lines in type-along mode
     host.innerHTML = `
       <div class="ed-gutter"></div>
       <div class="ed-area">
         <div class="ed-line"></div>
-        <pre aria-hidden="true"><code></code></pre>
+        <pre class="ed-ghost" aria-hidden="true"></pre>
+        <pre class="ed-hl" aria-hidden="true"><code></code></pre>
         <textarea spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="off" aria-label="Code editor"></textarea>
       </div>`;
     this.gutter = host.querySelector(".ed-gutter");
-    this.pre = host.querySelector("pre");
+    this.pre = host.querySelector("pre.ed-hl");
+    this.ghostEl = host.querySelector("pre.ed-ghost");
     this.code = host.querySelector("code");
     this.ta = host.querySelector("textarea");
     this.lineEl = host.querySelector(".ed-line");
@@ -46,13 +50,32 @@ export class CodeEditor {
     const v = this.ta.value;
     // trailing newline needs a placeholder so the pre has the same height as the textarea
     this.code.innerHTML = highlightPython(v) + "\n ";
-    const n = v.split("\n").length;
-    if (n !== this._lines || this.errLines.size) {
-      this._lines = n;
+    const lines = v.split("\n");
+    let n = lines.length;
+    const mis = new Set();
+    if (this.ghost) {
+      // ghost text: the part of each target line not yet typed; mismatching lines are flagged
+      const out = [];
+      const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      this.ghost.forEach((t, i) => {
+        const typed = lines[i];
+        if (typed === undefined) out.push(esc(t));
+        else if (t.startsWith(typed)) out.push(" ".repeat(typed.length) + esc(t.slice(typed.length)));
+        else { mis.add(i + 1); out.push(`<span class="g-mis">${" ".repeat(Math.max(typed.length, 1))}</span>`); }
+      });
+      for (let i = this.ghost.length; i < lines.length; i++) if (lines[i].trim()) { mis.add(i + 1); out.push(`<span class="g-mis">${" ".repeat(lines[i].length)}</span>`); } else out.push("");
+      this.ghostEl.innerHTML = out.join("\n") + "\n ";
+      n = Math.max(n, this.ghost.length);
+    } else this.ghostEl.innerHTML = "";
+    const sig = n + "|" + [...this.errLines].join(",") + "|" + [...mis].join(",");
+    if (sig !== this._gsig) {
+      this._gsig = sig;
       let html = "";
-      for (let i = 1; i <= n; i++) html += `<div${this.errLines.has(i) ? ' class="err"' : ""}>${i}</div>`;
+      for (let i = 1; i <= n; i++) html += `<div class="${this.errLines.has(i) ? "err" : ""}${mis.has(i) ? " mis" : ""}">${i}</div>`;
       this.gutter.innerHTML = html + "<div></div>";
+      this._curLine = -1;
     }
+    this.mismatches = mis;
     this.syncScroll();
     this.updateCaretLine();
   }
@@ -61,6 +84,8 @@ export class CodeEditor {
     const { scrollTop, scrollLeft } = this.ta;
     this.pre.scrollTop = scrollTop;
     this.pre.scrollLeft = scrollLeft;
+    this.ghostEl.scrollTop = scrollTop;
+    this.ghostEl.scrollLeft = scrollLeft;
     this.gutter.scrollTop = scrollTop;
     this.updateCaretLine();
   }
@@ -80,8 +105,24 @@ export class CodeEditor {
 
   markError(lines) {
     this.errLines = new Set(lines);
-    this._lines = -1;
+    this._gsig = null;
     this.render();
+  }
+
+  setGhost(lines) {
+    this.ghost = lines;
+    this._gsig = null;
+    this.render();
+  }
+
+  caretLine() { return this.ta.value.slice(0, this.ta.selectionStart).split("\n").length - 1; }
+
+  wordAtCursor() {
+    const v = this.ta.value, p = this.ta.selectionStart;
+    let a = p, b = p;
+    while (a > 0 && /[\w.]/.test(v[a - 1])) a--;
+    while (b < v.length && /[\w]/.test(v[b])) b++;
+    return v.slice(a, b).replace(/^\.+|\.+$/g, "");
   }
 
   goToLine(n) {
@@ -124,6 +165,7 @@ export class CodeEditor {
   }
 
   onKey(e) {
+    if (this.onKeyHook && this.onKeyHook(e, this)) { e.preventDefault(); return; }
     const ta = this.ta;
     const v = ta.value;
     const s = ta.selectionStart, end = ta.selectionEnd;

@@ -73,6 +73,7 @@
         <div class="brief" id="brief">
           <div class="seg" id="brief-tabs">
             <button data-tab="task" class="on">BRIEF</button>
+            <button data-tab="docs">DOCS <b id="doc-count"></b></button>
             <button data-tab="hints">HINTS <b id="hint-count"></b></button>
             <button data-tab="solution">SOLUTION</button>
             <span class="seg-spacer"></span>
@@ -89,6 +90,12 @@
             <span class="save-state" id="save-state">SAVED</span>
             <button class="btn ghost" id="export-btn" title="Save a copy to workspace/"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/></svg>EXPORT</button>
             <button class="btn ghost" id="reset-btn" title="Reset to starter code"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v4h4"/></svg>RESET</button>
+          </div>
+          <div class="guide-bar" id="guide-bar" hidden>
+            <div class="gb-head"><span class="label">TYPE-ALONG</span><span class="gb-prog" id="gb-prog"></span><span class="gb-bar"><i id="gb-fill"></i></span>
+              <button class="mini-btn" id="gb-fill-line" title="Type the current line for me (Ctrl+Shift+Space)">FILL LINE</button>
+              <button class="mini-btn" id="gb-restart" title="Start the walkthrough again">RESTART</button></div>
+            <div class="gb-note" id="gb-note"></div>
           </div>
           <div class="editor" id="editor"></div>
         </div>

@@ -146,6 +146,51 @@ statistical/performance test last. Make failure messages actionable, e.g.
 Use fixed seeds so checks are deterministic. Guard each check so one failure doesn't stop the
 rest when practical (a NotImplementedError will be reported nicely by the harness).
 
+### Type-along walkthroughs (`guided.py`)
+
+Each coding lesson opens with a **type-along**: the learner types real code over faint ghost text,
+with a note for each line, then later exercises use the same tools with no help ("I do, we do, you do").
+
+An exercise directory with a `guided.py` (and usually no `starter.py`/`solution.py`) is a type-along.
+Name it `00-walkthrough-<slug>` so it sorts first, and place it in `lesson.md` before the first solo
+exercise. Syntax inside `guided.py`:
+
+```python
+#> A note explaining the NEXT code line. Consecutive #> lines join into one note. Markdown allowed.
+import numpy as np
+#= given
+# lines between `#= given` and `#= end` are provided: they fill in automatically
+# when the learner presses Enter on the line before them (use for long, unteachable boilerplate)
+#= end
+```
+
+Rules of thumb:
+- 20–45 typed lines. Teach the *idioms the solo exercises need* (NumPy calls, loop shapes, update rules),
+  on a **different but related** problem — never the solo exercise's own answer.
+- Annotate nearly every non-trivial line: say *why*, name the gotcha, point at the DOCS entry.
+- 4-space indentation, no tabs, no trailing whitespace. Keep lines short (≤ 90 chars).
+- `check.py` verifies the typed code behaves correctly (small, fast, deterministic). `meta.json`: xp 50–100,
+  `"hints": []`. The solution shown/validated is `guided.py` minus the `#>`/`#=` lines.
+
+---
+
+## API reference (`docs/*.md`) — the DOCS tab
+
+The workbench's DOCS tab lists every reference entry whose `match:` strings appear in the current
+exercise's code, and `F1` / `Ctrl+I` in the editor looks up the word under the cursor. Entries live in
+`docs/<topic>.md` (front matter `title:` = topic name):
+
+```
+## np.argmax
+sig: np.argmax(a, axis=None) → int
+match: np.argmax(, .argmax(
+tags: greedy, best action
+
+What it does in one or two sentences, a short example, and a `> [!WARN]` for the classic mistake.
+```
+
+`match:` defaults to the title. Keep entries short and practical — they are looked up mid-exercise.
+
 ---
 
 ## rlhud — visuals from Python

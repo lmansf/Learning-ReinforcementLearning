@@ -95,6 +95,9 @@ def load_lessons():
                     emeta = json.loads(_read(os.path.join(ep, "meta.json"), "{}"))
                 except json.JSONDecodeError as e:
                     emeta = {"title": f"{ename} (bad meta.json: {e})"}
+                guided = _read(os.path.join(ep, "guided.py"))
+                if guided:
+                    emeta.setdefault("kind", "guided")
                 exercises.append({
                     "id": ename,
                     "title": emeta.get("title", ename),
@@ -104,7 +107,8 @@ def load_lessons():
                     "timeout": emeta.get("timeout", 60),
                     "kind": emeta.get("kind", "code"),
                     "starter": _read(os.path.join(ep, "starter.py")),
-                    "solution": _read(os.path.join(ep, "solution.py")),
+                    "solution": _read(os.path.join(ep, "solution.py")) or (strip_guided(guided) if guided else ""),
+                    "guided": guided,
                     "has_check": os.path.isfile(os.path.join(ep, "check.py")),
                 })
         lessons.append({
@@ -143,6 +147,45 @@ def env_report():
         "packages": {m: ver(m) for m in ("numpy", "torch", "gymnasium", "matplotlib")},
         "workspace": WORKSPACE,
     }
+
+
+def strip_guided(src: str) -> str:
+    """Turn a type-along script into plain Python: drop `#>` notes and `#=` block markers."""
+    return "\n".join(l for l in src.splitlines() if not re.match(r"^\s*#[>=]", l)).strip("\n") + "\n"
+
+
+DOCS = os.path.join(ROOT, "docs")
+
+
+def load_docs():
+    """Parse docs/*.md into reference entries.
+
+    Each entry starts with `## title`, optional `sig:` / `match:` / `tags:` lines, then Markdown.
+    `match:` lists comma-separated substrings that, when found in an exercise's code, surface the entry."""
+    entries = []
+    if not os.path.isdir(DOCS):
+        return entries
+    for name in sorted(os.listdir(DOCS)):
+        if not name.endswith(".md"):
+            continue
+        meta, body = parse_front_matter(_read(os.path.join(DOCS, name)))
+        topic = meta.get("title", name[:-3])
+        for chunk in re.split(r"^## ", body, flags=re.M)[1:]:
+            head, _, rest = chunk.partition("\n")
+            e = {"id": f"{name[:-3]}:{head.strip()}", "title": head.strip(), "topic": topic, "sig": "", "match": [], "tags": []}
+            lines = rest.split("\n")
+            while lines and re.match(r"^(sig|match|tags):", lines[0]):
+                k, v = lines.pop(0).split(":", 1)
+                v = v.strip()
+                if k == "sig":
+                    e["sig"] = v.replace("`", "")
+                else:
+                    e[k] = [x.strip() for x in v.split(",") if x.strip()]
+            if not e["match"]:
+                e["match"] = [e["title"]]
+            e["body"] = "\n".join(lines).strip()
+            entries.append(e)
+    return entries
 
 
 SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
@@ -189,6 +232,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"error": "unauthorized"}, 401)
             if url.path == "/api/lessons":
                 return self._json({"lessons": load_lessons()})
+            if url.path == "/api/docs":
+                return self._json({"docs": load_docs()})
             if url.path == "/api/env":
                 return self._json(env_report())
             if url.path == "/api/levels":

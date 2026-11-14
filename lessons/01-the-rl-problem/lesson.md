@@ -78,6 +78,15 @@ keeps the infinite sum finite. Drag the slider and watch how much a distant rewa
  "explain": "1 + 0.5·1 + 0.25·1 = 1.75"}
 ```
 
+Before you write code on your own, type along once. The walkthrough shows every idiom the
+next two exercises need — with an explanation for each line.
+
+```exercise
+00-walkthrough-rollout
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-discounted-return
 ```
