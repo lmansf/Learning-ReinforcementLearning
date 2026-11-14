@@ -184,7 +184,7 @@ rlhud.replay(frames, title="Waiting drone", fps=8)
 
 ## rlhud.in_app
 sig: `rlhud.in_app()` → bool
-match: rlhud.in_app(, import rlhud
+match: rlhud.in_app(
 tags: environment, terminal fallback, portable
 
 True when the code runs inside the Reward Signal app. Outside the app every `rlhud` call prints a short text summary instead (`[stat] name: value`, `[plot] …`), so your script stays portable — no need to guard calls yourself.

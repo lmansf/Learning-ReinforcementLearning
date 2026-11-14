@@ -111,7 +111,7 @@ env.reset(); env.state_id()                       # same as the obs returned by 
 
 ## CoreRunner vector layout
 sig: `obs[:125]` = 5×5×5 local view · `obs[125:]` = 8 globals
-match: .vector(, obs_size
+match: .vector(, .obs_size
 tags: features, vector, egocentric
 
 The first 125 numbers are `v.ravel()` of a `(5 channels, 5, 5)` window centred on the drone (channels: wall/out-of-bounds, vent, uncollected core, sentry now-or-next-step, exit). The last 8: `dr, dc` to the target (nearest core, or exit when open) scaled by map size, four direction flags (target is up / right / down / left), `exit_open`, battery fraction.
@@ -229,7 +229,7 @@ env = CoreRunner(layout=rows, battery=50)
 
 ## CoreRunner internals (pos, collected, t, period, core_list)
 sig: `env.pos` (r, c) · `env.collected` list[bool] · `env.t` · `env.period` · `env.core_list` · `env.h`, `env.w` · `env.battery`
-match: env.pos =, c = env.pos, env.collected, env.period, env.core_list, * env.w, env.h *, env.battery
+match: env.pos =, c = env.pos, env.pos), env.collected, env.period, env.core_list, * env.w, env.h *, env.t =, env.t %, env.battery
 tags: state design, raw state, Markov, internals
 
 The raw game state — what you combine into your own Markov state in *Patrol Deck*. Sentries repeat every `period` steps, so only `t % period` matters for their positions.
@@ -247,7 +247,7 @@ phase = env.t % env.period
 
 ## CoreRunner.sentries / exit_open
 sig: `env.sentries(t=None)` → list of (r, c) · `env.exit_open` → bool
-match: .sentries(, exit_open
+match: .sentries(, .exit_open
 tags: sentry, patrol, exit, lookahead
 
 Sentry positions at time `t` (default: now) — they ping-pong along fixed paths, so you can look ahead. `exit_open` is True once every core is collected.

@@ -68,7 +68,7 @@ Q.shape                  # (48, 4)
 
 ## env.obs_size
 sig: `env.obs_size` → length of a vector observation
-match: obs_size
+match: .obs_size
 tags: input size, network, features
 
 Number of floats in a continuous observation: `CartPole` 4, `MountainCar` 2, `CoreRunner(obs="vector")` 133. Use it as the network's input size.
@@ -99,7 +99,7 @@ r = bandit.pull(2)       # one noisy reward around 0.64
 
 ## bandit.pull / optimal_action / q_star
 sig: `bandit.pull(a)` → float · `bandit.optimal_action` → int · `bandit.q_star` → ndarray (k,)
-match: .pull(, optimal_action, q_star
+match: .pull(, .optimal_action, .q_star
 tags: reward, best arm, % optimal
 
 `pull` returns one reward. `optimal_action` is the index of the arm with the highest *true* mean (re-computed each time — it can change in a nonstationary bandit). Use it to plot "% optimal action". Gym-style `reset()`/`step(a)` also exist (one state, never terminates).
@@ -113,7 +113,7 @@ obs, r, term, trunc, info = b.step(0)    # obs == 0, term == False
 
 ## GridWorld
 sig: `GridWorld(layout=None, slip=0.0, step_reward=0.0, rewards=None, max_steps=200, seed=None)`
-match: GridWorld(
+match: GridWorld(, env.layout
 tags: gridworld, MDP, tabular, dynamic programming
 
 A tabular grid MDP from an ASCII map: `S` start, `.` floor, `#` wall, `G` goal (+1, terminal), `X` pit (−1, terminal). Moves into walls/borders stay put. `slip` = probability the move goes to one of the two perpendicular directions (split equally). Default layout: `["...G", ".#.X", "S..."]`.
@@ -164,7 +164,7 @@ env.pos_of(7)            # (1, 3)
 
 ## GridWorld.start / terminal_states / wall_states
 sig: `env.start` → int · `env.terminal_states` → set · `env.wall_states` → set
-match: env.start, terminal_states, wall_states
+match: env.start, .terminal_states, .wall_states
 tags: start, terminal, walls, skip
 
 The start state and the sets of terminal (`G`, `X`) and wall (`#`) states.

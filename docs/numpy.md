@@ -192,6 +192,22 @@ np.stack(obs).shape          # (2, 2)
 np.stack(obs, axis=1).shape  # (2, 2), but columns are the observations
 ```
 
+## np.tile / np.repeat
+sig: `np.tile(a, reps)` → `a` repeated as a block · `np.repeat(a, k)` → each element repeated
+match: np.tile(, np.repeat(
+tags: repeat, grid of points, batch copies
+
+`tile` repeats the whole array (`reps` can be a shape, e.g. `(n, 1)` to stack copies as rows); `repeat` repeats each element in place. Together they enumerate grids of points.
+
+```python
+np.tile(np.arange(3), 2)              # array([0, 1, 2, 0, 1, 2])
+np.repeat(np.arange(3), 2)            # array([0, 0, 1, 1, 2, 2])
+np.tile([0.1, 0.9], (3, 1)).shape     # (3, 2)  — the same policy row for 3 states
+```
+
+> [!WARN] tile vs repeat
+> For an (x, y) grid you need one of each: `xs = np.tile(np.arange(W), H)`, `ys = np.repeat(np.arange(H), W)`. Using the same one twice gives only the diagonal.
+
 ## np.c_
 sig: `np.c_[a, b, ...]` → arrays joined as columns
 match: np.c_[
@@ -516,6 +532,23 @@ np.outer([1., 2.], [10., 0., -1.])
 #        [ 20.,   0.,  -2.]])
 ```
 
+## np.einsum
+sig: `np.einsum(subscripts, *operands)` — sums over repeated index letters
+match: np.einsum(
+tags: tensor, Bellman, expected value, index notation
+
+Writes a product-and-sum with index letters. For a model `T[s, a, s']` and values `V[s']`, the expected next value is `np.einsum("ijk,k->ij", T, V)` — the same as `T @ V`.
+
+```python
+T = np.full((2, 2, 2), 0.5)          # T[s, a, s'] transition probabilities
+V = np.array([0.0, 10.0])
+np.einsum("ijk,k->ij", T, V)         # array([[5., 5.], [5., 5.]])
+np.allclose(np.einsum("ijk,k->ij", T, V), T @ V)   # True
+```
+
+> [!WARN] Letters must line up
+> A letter that appears in the inputs but not after `->` is summed over. Misplacing one silently sums the wrong axis — check the result's shape.
+
 ## np.linalg.solve
 sig: `np.linalg.solve(A, b)` → x with `A @ x = b`
 match: np.linalg.solve(, linalg.solve(
@@ -670,6 +703,18 @@ np.any(x > 0.25)      # True
 
 > [!WARN] Not `if array:`
 > `if x > 0:` on an array with more than one element raises *ambiguous truth value*. Say which you mean with `.any()` or `.all()`.
+
+## np.count_nonzero
+sig: `np.count_nonzero(a, axis=None)` → int
+match: np.count_nonzero(
+tags: count, how many, boolean
+
+Counts non-zero (or True) entries — e.g. how many samples hit the clip.
+
+```python
+np.count_nonzero([0, 3, 0, 1])                    # 2
+np.count_nonzero(np.array([1., -2., 3.]) > 0)     # 2
+```
 
 ## np.exp
 sig: `np.exp(x)` → eˣ element-wise
