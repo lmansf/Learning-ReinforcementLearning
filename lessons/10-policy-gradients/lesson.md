@@ -97,6 +97,16 @@ Two actions, x(s) = [1], θ = [0, 0] so π = [0.5, 0.5]. We take a = 1 and get G
  "explain": "The score is x·(𝟙ₐ − π) = x·[0.3, −0.2, −0.1]. The taken action's preference goes up (by 1 − 0.7), every other action's goes down in proportion to its probability."}
 ```
 
+Before you write code on your own, type along once. The walkthrough trains a gradient bandit
+and shows every idiom the next two exercises need — a stable softmax, `rng.choice(p=…)`,
+one-hot scores and batch updates with normalised advantages — with an explanation for each line.
+
+```exercise
+00-walkthrough-gradient-bandit
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-softmax-policy
 ```

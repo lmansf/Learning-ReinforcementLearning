@@ -82,6 +82,17 @@ r < 1), the unclipped term is the smaller one and its gradient pulls the policy 
  "explain": "min(0.7·(−2), 0.8·(−2)) = min(−1.4, −1.6) = −1.6 — the clipped, constant term. The bad action is already 30% less likely, more than the 20% PPO allows credit for, so it stops pushing."}
 ```
 
+Before you write code on your own, type along once. The walkthrough estimates a new policy's value
+from old data and shows every idiom the next two exercises need — log-prob gathering, ratios,
+`np.minimum` capping with zero gradients via `np.where`, and shuffled minibatch epochs — with an
+explanation for each line.
+
+```exercise
+00-walkthrough-ratios-and-minibatches
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-clipped-objective
 ```

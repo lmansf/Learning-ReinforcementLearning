@@ -91,6 +91,17 @@ search, and it is remarkably hard to beat.
 > *how much better than what we do today?* Always tune the classic policy **as well as you can**,
 > on the same data, and report the agent relative to it.
 
+Before you write code on your own, type along once. The walkthrough simulates and tunes a simple
+order-up-to policy and shows every idiom the next three exercises need — policies that read the
+env, totals from `info` dicts, best-of tuning, time windows and boolean masks — with an
+explanation for each line.
+
+```exercise
+00-walkthrough-simulate-a-policy
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-baseline-planner
 ```

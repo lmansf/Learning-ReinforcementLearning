@@ -80,6 +80,16 @@ that is where function approximation comes in.
 Build a tabular Q-learning agent. This is the template you will reuse for the next two
 missions, so write it cleanly.
 
+Before you start the missions, type along once. The walkthrough builds the toolkit all four
+missions reuse — an ε schedule, tie-breaking argmax, the Core Runner episode loop with replays,
+and an evaluation helper — with an explanation for each line. It does not solve any mission.
+
+```exercise
+00-walkthrough-runner-toolkit
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-boot-sequence
 ```

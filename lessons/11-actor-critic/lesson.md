@@ -110,6 +110,16 @@ accumulate Âₜ₊₁. Multiply both by (1 − doneₜ).
 > rollout. The standard fix: on truncation, add γ·v̂(s_final) to the last reward, then treat the
 > step as done. The provided A2C loop does exactly that.
 
+Before you write code on your own, type along once. The walkthrough works through a hand-made
+rollout and shows every idiom the next two exercises need — aligning V(sₜ₊₁), backward sums with
+done-masks and a linear critic update — with an explanation for each line.
+
+```exercise
+00-walkthrough-returns-and-critic
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-gae
 ```

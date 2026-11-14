@@ -106,6 +106,17 @@ both methods learn a staircase approximation of a nearly straight line.
   exactly — the minimum. For linear TD there is a guarantee: VE(w_TD) ≤ 1/(1−γ) · min VE.
   In exchange it learns from every step with far less variance.
 
+Before you write code on your own, type along once. The walkthrough fits a toy function with
+bucketed features and shows every idiom the next three exercises need — feature vectors,
+`w @ x`, the in-place gradient step, `np.floor`/`np.clip` bucketing and sparse indices — with an
+explanation for each line.
+
+```exercise
+00-walkthrough-linear-features
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-linear-value-updates
 ```

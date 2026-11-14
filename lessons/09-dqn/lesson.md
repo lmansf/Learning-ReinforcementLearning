@@ -52,6 +52,17 @@ this bookkeeping for you, for any graph.
  "explain": "Xᵀ is (4, 32), D is (32, 64), so XᵀD is (4, 64) — the same shape as W, as every gradient must be. The batch dimension is summed out by the matrix product."}
 ```
 
+Before you write code on your own, type along once. The walkthrough builds a one-hidden-layer
+network by hand and shows every idiom the next three exercises need — cached forward pass,
+chain-rule backward, a finite-difference check and `rng.integers` mini-batches — with an
+explanation for each line.
+
+```exercise
+00-walkthrough-tiny-net
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-numpy-mlp
 ```

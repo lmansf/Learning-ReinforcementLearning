@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · A Core Runner toolkit",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you are on. Provided blocks fill in automatically when you press Enter.\n\nBefore the missions, build the small toolkit every one of them leans on — without solving any of them. A count-based explorer (not a learner!) wanders level 1 while you practise:\n\n- a **linear schedule** for ε with `min(t / max(1, n), 1.0)`\n- **argmax with random tie-breaking** via `np.flatnonzero` and `rng.choice`\n- the **episode loop** on `CoreRunner`, the tabular state as a table index, and a `(n_states, 5)` table\n- **replays** with `env.snapshot()` and `rlhud.replay`, and a visit map indexed by the `env.pos` tuple\n- an **evaluation helper** that reports mean return and escape rate from `info[\"event\"]`\n\nPress **F1** on any word (e.g. `np.flatnonzero`) to open its reference in the **DOCS** tab. When you are done: **Run**, then **Check**. The four missions use the same tools with no ghost text.",
+  "hints": [],
+  "xp": 75,
+  "timeout": 20
+}

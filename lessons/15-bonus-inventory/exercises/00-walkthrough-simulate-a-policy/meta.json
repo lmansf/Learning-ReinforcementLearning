@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · Simulate and tune a stocking policy",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you are on. Provided blocks fill in automatically when you press Enter.\n\nBefore any RL, learn to drive the inventory simulator like an analyst. With a simple **order-up-to S** policy you will practise:\n\n- a policy as a closure that reads `env.position` and calls `env.nearest_action`\n- the episode loop, adding up **profit, demand, sales and orders** from the per-day `info` dicts\n- averaging metric dicts over seeds and a **brute-force tune** that keeps the best candidate (`-np.inf` start)\n- a **time window** of a history dict, and **boolean masks** combined with `&`\n- `rlhud` bars, line plots and stats for business numbers like the **fill rate**\n\nPress **F1** on any word (e.g. `np.inf`) to open its reference in the **DOCS** tab. When you are done: **Run**, then **Check**. The next exercises — tuning (s, S), residual Q-learning and an out-of-time study — use the same tools with no ghost text.",
+  "hints": [],
+  "xp": 75,
+  "timeout": 30
+}
