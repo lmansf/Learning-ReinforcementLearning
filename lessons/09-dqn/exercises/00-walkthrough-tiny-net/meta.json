@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · A tiny network, by hand",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you are on. Provided blocks fill in automatically when you press Enter.\n\nYou will write a one-hidden-layer network in pure NumPy and fit it to a V-shaped curve. Along the way you meet every idiom this lesson's exercises need:\n\n- **forward** with `x @ W + b`, ReLU via `np.maximum`, and a **cache** of each layer's input\n- **backward** with the chain rule — and the shape of every gradient (`hᵀ·dy`, `dy.sum(axis=0)`, the ReLU mask)\n- a **finite-difference gradient check** (and why `reshape(-1)` is a view)\n- **mini-batches** with `rng.integers` and in-place updates `p -= lr * g`\n- picking one output per row with `out[np.arange(B), cols]`\n\nPress **F1** on any word (e.g. `np.maximum`) to open its reference in the **DOCS** tab. When you are done: **Run**, then **Check**. The next exercises — a general MLP, a replay buffer and DQN — use the same tools with no ghost text.",
+  "hints": [],
+  "xp": 75,
+  "timeout": 20
+}

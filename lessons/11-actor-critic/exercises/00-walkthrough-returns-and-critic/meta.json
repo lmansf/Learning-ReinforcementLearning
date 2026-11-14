@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · Returns with done-masks and a linear critic",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you are on. Provided blocks fill in automatically when you press Enter.\n\nActor-critic code is mostly careful array work on a **rollout**: a fixed number of steps that may span several episodes. On a hand-made trajectory and a tiny corridor you will practise:\n\n- lining up V(sₜ₊₁) with step t via `np.append(values[1:], last_value)`\n- a **backward discounted sum** with **done-masking** `(1 − doneₜ)` and a bootstrap value at the end\n- a **linear critic** fitted by gradient descent: `err = prediction − target`, `w -= lr * X.T @ err / N`\n- the `(N, 1)` vs `(N,)` broadcasting trap and `reshape(-1, 1)`\n\nPress **F1** on any word (e.g. `np.append`) to open its reference in the **DOCS** tab. When you are done: **Run**, then **Check**. The next exercises — GAE and A2C on CartPole — use the same tools with no ghost text.",
+  "hints": [],
+  "xp": 75,
+  "timeout": 20
+}

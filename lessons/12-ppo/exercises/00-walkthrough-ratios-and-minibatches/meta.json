@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · Ratios, clipping and minibatch epochs",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you are on. Provided blocks fill in automatically when you press Enter.\n\nPPO reuses one batch of experience for several updates, so it must ask: *how much has the policy changed for each sample?* On a toy off-policy estimate and a small regression you will practise:\n\n- gathering log π(aᵢ|sᵢ) with `P[np.arange(N), actions]` (and `+ 1e-12`)\n- **probability ratios** `np.exp(logp_new − logp_old)`\n- capping with `np.minimum` (not `np.min`!), and **zero gradient where the cap binds** via `np.where`\n- boolean masks combined with `|` — and why the parentheses matter\n- **epochs × shuffled minibatches** with `rng.permutation`, slicing, and `len(mb)`\n\nPress **F1** on any word (e.g. `np.minimum`) to open its reference in the **DOCS** tab. When you are done: **Run**, then **Check**. The next exercises — the clipped objective and PPO on CartPole — use the same tools with no ghost text.",
+  "hints": [],
+  "xp": 75,
+  "timeout": 20
+}

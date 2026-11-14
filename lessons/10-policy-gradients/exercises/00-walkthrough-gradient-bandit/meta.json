@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · Softmax and the gradient bandit",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you are on. Provided blocks fill in automatically when you press Enter.\n\nThe smallest policy-gradient method there is: a **gradient bandit** that learns action preferences by gradient ascent. You will meet every idiom the lesson's exercises need:\n\n- a **numerically stable softmax** (subtract the max, `axis=-1, keepdims=True`) that works on one row or a batch\n- **sampling** with `rng.choice(n, p=p)`\n- one-hot rows with `np.eye(n)[A]` and the score **onehot(a) − π**\n- gradient **ascent** with a baseline, then a **batch** version: normalised advantages, `adv[:, None]` broadcasting and `X.T @ G / N`\n\nPress **F1** on any word (e.g. `keepdims`) to open its reference in the **DOCS** tab. When you are done: **Run**, then **Check**. The next exercises — a linear-softmax policy and REINFORCE on CartPole — use the same tools with no ghost text.",
+  "hints": [],
+  "xp": 75,
+  "timeout": 20
+}
