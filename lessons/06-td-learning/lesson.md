@@ -88,6 +88,16 @@ Sutton & Barto's Example 6.2: five states A–E in a row, start in C, step left 
 equal probability. Falling off the right end pays +1, the left end 0. The true values are
 1/6, 2/6, …, 5/6 — the probability of exiting right.
 
+Before you write TD code on your own, type along once. The walkthrough trains *Expected SARSA*
+(it averages over the next action instead of sampling it) on a small grid with a pit, and shows
+every idiom this lesson's four exercises need, with an explanation for each line.
+
+```exercise
+00-walkthrough-expected-sarsa
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-td0-random-walk
 ```

@@ -98,6 +98,17 @@ Simulating it is ten lines of code. That gap is exactly where Monte Carlo shines
 Consider the naive policy *stick on 20 or 21, otherwise hit*. How good is it? Let Monte Carlo
 tell you.
 
+Before you write it on your own, type along once. On a small GridWorld, where a random walker
+revisits states so *first visit* really matters, the walkthrough records episodes, computes
+returns backwards and averages first-visit returns per state and per (state, action), with an
+explanation for each line.
+
+```exercise
+00-walkthrough-returns
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-mc-prediction
 ```

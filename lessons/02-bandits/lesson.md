@@ -112,6 +112,17 @@ Every arm keeps getting pulled forever, so every estimate converges to the truth
 > agent always tries arm 0 first, and in a deterministic task it might never try anything else.
 > Break ties at random: `rng.choice(np.flatnonzero(Q == Q.max()))`.
 
+Before you write an agent on your own, type along once. On a tiny three-armed slot machine
+the walkthrough builds a purely greedy agent and shows every idiom the next three exercises
+need (seeded random numbers, tie-breaking, incremental means, many-run averages), with an
+explanation for each line.
+
+```exercise
+00-walkthrough-slots
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-epsilon-greedy
 ```

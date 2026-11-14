@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · Windows, traces and a model",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you're on. Provided blocks fill in automatically when you press Enter at the end of a line.\n\nThree small tools, one for each exercise of this lesson:\n\n- **n-step windows** on a finished episode: slicing `rewards[t:end]` with `end = min(t + n, T)`, γ-weights via `enumerate`, and bootstrapping from V *only* when the window ends before the episode\n- an **eligibility trace** vector: `e[s] += 1`, the vector update `e *= γλ`, and why you append `e.copy()`\n- a **model** for planning: a dict `model[(s, a)] = (r, s2, done)` and uniform sampling of remembered keys with `list(model)` and `rng.integers`\n\nPress **F1** on any word (e.g. `enumerate`) to open its reference in the **DOCS** tab. When you're done: **Run**, then **Check**. n-step TD, TD(λ) and Dyna-Q follow — same tools, no ghost text.",
+  "hints": [],
+  "xp": 70,
+  "timeout": 20
+}

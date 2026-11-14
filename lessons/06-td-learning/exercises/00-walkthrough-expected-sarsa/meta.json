@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · Expected SARSA on a small grid",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you're on. Provided blocks fill in automatically when you press Enter at the end of a line.\n\nYou'll train **Expected SARSA** — a cousin of the algorithms in this lesson that averages over the next action instead of sampling it — on a small GridWorld with a pit. Along the way you'll use every tool the exercises need:\n\n- the **TD error** δ = target − estimate, with **no bootstrap after termination**\n- an in-place `Q[s, a] += alpha * delta` on a `np.zeros((n_states, n_actions))` table\n- ε-greedy behaviour with **random tie-breaking** (`rng.random`, `rng.integers`, `np.flatnonzero`)\n- the episode loop `step → update → s = s2` with `terminated or truncated`, and a per-episode return\n- `Q.max(axis=1)`, `np.argmax(Q, axis=1)` and `rlhud.grid` to show values and the greedy policy\n\nPress **F1** on any word (e.g. `np.flatnonzero`) to open its reference in the **DOCS** tab. When you're done: **Run**, then **Check**. TD(0), SARSA, Q-learning and Double Q-learning follow — same tools, no ghost text.",
+  "hints": [],
+  "xp": 70,
+  "timeout": 20
+}

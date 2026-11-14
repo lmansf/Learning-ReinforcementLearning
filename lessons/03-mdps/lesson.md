@@ -118,6 +118,16 @@ goal: q = 10, with no γ·V term because nothing follows termination.
  "explain": "LEFT from the middle leads to S with reward −1, so q = −1 + γ·V(S) = −1 + 0.5·2 = 0."}
 ```
 
+Before you write planning code on your own, type along once. The walkthrough writes down a
+three-state robot MDP in the same `P[s][a]` format as GridWorld, computes q-values with loops
+and with NumPy, and solves a policy's Bellman equation exactly, with an explanation for each line.
+
+```exercise
+00-walkthrough-tiny-mdp
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-one-step-lookahead
 ```

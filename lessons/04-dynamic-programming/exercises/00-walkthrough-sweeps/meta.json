@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · Sweeps until Δ < θ",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you're on. Provided blocks fill in automatically when you press Enter at the end of a line.\n\nYou'll evaluate a fixed *deterministic* policy (always RIGHT) on a small slippery GridWorld and improve it once, using every building block of this lesson's exercises:\n\n- a **backup** over `for prob, s2, r, done in env.P[s][a]`, with no future after termination\n- a **sweep** over all states, **in place** vs **two arrays** — and the aliasing gotcha `out = V` vs `V.copy()`\n- tracking **Δ** state by state and the bounded convergence loop `for … : … if delta < theta: break`\n- a list of Δs for a convergence plot (`np.log10`)\n- **policy extraction**: `np.argmax(q, axis=1)` → one-hot rows with `np.eye(k)[actions]`, and `np.array_equal`\n- `rlhud.grid` with `env.to_grid`, `env.policy_grid`, `env.walls_mask()` and `env.labels()`\n\nPress **F1** on any word (e.g. `np.array_equal`) to open its reference in the **DOCS** tab. When you're done: **Run**, then **Check**. Policy evaluation, policy iteration and value iteration come next — same tools, no ghost text.",
+  "hints": [],
+  "xp": 70,
+  "timeout": 20
+}

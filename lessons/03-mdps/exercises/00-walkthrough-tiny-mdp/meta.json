@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · A tiny MDP in arrays",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you're on. Provided blocks fill in automatically when you press Enter at the end of a line.\n\nYou'll write down a three-state *battery robot* MDP and do everything this lesson's exercises need, on a problem small enough to check by hand:\n\n- the model format `P[s][a] → [(prob, next_state, reward, terminated), …]` and the triple loop that walks it\n- why a **terminating** transition pays its reward but has no future (no γ·V(s′))\n- the model as arrays, and all q-values in one line with `@` (or `np.einsum`)\n- exact policy evaluation with `np.eye` and `np.linalg.solve`, fancy indexing `R[states, actions]`\n- `itertools.product` to enumerate every deterministic policy, `np.argmax(Q, axis=1)`, and `rlhud.grid` for a GridWorld\n\nPress **F1** on any word (e.g. `np.linalg.solve`) to open its reference in the **DOCS** tab. When you're done: **Run**, then **Check**. The next three exercises use the same tools on GridWorld with no ghost text.",
+  "hints": [],
+  "xp": 70,
+  "timeout": 20
+}

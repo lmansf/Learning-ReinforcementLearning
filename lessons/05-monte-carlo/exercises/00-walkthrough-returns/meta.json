@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · Episodes, returns and first visits",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you're on. Provided blocks fill in automatically when you press Enter at the end of a line.\n\nMonte Carlo methods learn from whole episodes. On a small GridWorld with a random walker — where states repeat, so *first visit* really matters — you'll build the bookkeeping this lesson's exercises need:\n\n- an episode as a **list of `(state, action, reward)` triples** (and which state goes in each triple)\n- returns for every step by walking the episode **backwards**: `G = r + γ·G`\n- a `set` of seen keys for **first-visit** averaging, `zip`, and tuple unpacking with `_`\n- `defaultdict(list)` to collect returns, **tuple keys** `(s, a)` for action values, a dict comprehension and `dict.get`\n\nPress **F1** on any word (e.g. `defaultdict`) to open its reference in the **DOCS** tab. When you're done: **Run**, then **Check**. The Blackjack exercises that follow use the same tools with no ghost text.",
+  "hints": [],
+  "xp": 70,
+  "timeout": 20
+}

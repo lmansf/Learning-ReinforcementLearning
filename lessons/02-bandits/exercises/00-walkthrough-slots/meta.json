@@ -1,0 +1,7 @@
+{
+  "title": "Type-along · Greedy slot machines",
+  "prompt": "**Type the code yourself, line by line.** The ghost text shows what to write next and the note above the editor explains the line you're on. Provided blocks fill in automatically when you press Enter at the end of a line.\n\nOn a tiny three-armed *slot machine* problem (each arm pays 1 or 0) you'll build a purely greedy agent and meet every tool this lesson's exercises need:\n\n- a seeded random **Generator**: `np.random.default_rng`, `rng.random()`, `rng.choice`, `rng.integers`\n- greedy choice with **random tie-breaking** via `np.flatnonzero(Q == Q.max())`\n- `np.full` / `np.zeros(..., dtype=int)` for estimates and counts, and the **incremental mean** update\n- a **2-D results array** filled row by row and averaged with `.mean(axis=0)`, plus a boolean mask\n- a `lambda` agent factory with the default-argument trick\n\nPress **F1** on any word (e.g. `np.flatnonzero`) to open its reference in the **DOCS** tab. When you're done: **Run**, then **Check**. The next exercises (ε-greedy, the 10-armed testbed, UCB) use the same tools with no ghost text.",
+  "hints": [],
+  "xp": 60,
+  "timeout": 20
+}

@@ -64,6 +64,16 @@ for the uniform random policy:
  "explain": "Each backup only looks one step ahead, so a state k steps from the reward first 'hears' about it in sweep k. Far states need more sweeps."}
 ```
 
+Before you write the algorithms on your own, type along once. The walkthrough evaluates a fixed
+*always RIGHT* policy sweep by sweep (in place and with two arrays), stops when Δ < θ, and
+extracts a greedy policy, with an explanation for each line.
+
+```exercise
+00-walkthrough-sweeps
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-policy-evaluation
 ```

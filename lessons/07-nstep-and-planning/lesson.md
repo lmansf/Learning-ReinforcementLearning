@@ -65,6 +65,16 @@ The reward reaches two states back in one episode — TD(0) managed one, MC all 
  "explain": "1 + 0.5·0 + 0.25·2 + 0.125·4 = 1 + 0 + 0.5 + 0.5 = 2.0"}
 ```
 
+Before you write these on your own, type along once. The walkthrough builds three small tools,
+one per exercise: n-step reward windows on a finished episode, an eligibility-trace vector, and
+a model dict you can sample from for planning, with an explanation for each line.
+
+```exercise
+00-walkthrough-windows-traces-models
+```
+
+Now the same tools, no ghost text:
+
 ```exercise
 01-nstep-td
 ```
