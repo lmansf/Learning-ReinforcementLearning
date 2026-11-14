@@ -5,6 +5,8 @@ Everything here is optional sugar: plain print() always works. When your code
 runs inside the app, these calls render charts, grids, stat tiles and game
 replays in the VISUALS tab. When you run the same file from a normal terminal,
 they quietly print a short text summary instead, so your scripts stay portable.
+Inside a Jupyter / Google Colab notebook they render as rich HUD-style outputs
+(via the rlcolab module of the Colab edition).
 
     import rlhud
     rlhud.plot(returns, label="Q-learning", title="Episode return")
@@ -30,15 +32,37 @@ import time
 _MARK = "\x1eRLHUD"
 _IN_APP = os.environ.get("RLHUD_APP") == "1"
 
+
+def _detect_notebook() -> bool:
+    """True inside a Jupyter / Colab kernel (set RLHUD_NOTEBOOK=0 to force text output)."""
+    if _IN_APP or os.environ.get("RLHUD_NOTEBOOK") == "0":
+        return False
+    ipy = sys.modules.get("IPython")
+    if ipy is None:
+        return False
+    try:
+        ip = ipy.get_ipython()
+    except Exception:
+        return False
+    return ip is not None and getattr(ip, "kernel", None) is not None
+
+
+_IN_NB = _detect_notebook()
+
 __all__ = [
     "plot", "chart", "bars", "grid", "stat", "replay", "table",
-    "progress", "text", "in_app",
+    "progress", "text", "in_app", "in_notebook",
 ]
 
 
 def in_app() -> bool:
     """True when running inside the Reward Signal app."""
     return _IN_APP
+
+
+def in_notebook() -> bool:
+    """True when visuals render as rich notebook outputs (Colab / Jupyter, via rlcolab)."""
+    return _IN_NB
 
 
 def _clean(x):
@@ -63,6 +87,14 @@ def _clean(x):
 
 
 def _emit(kind: str, **payload):
+    if _IN_NB:
+        payload["type"] = kind
+        try:
+            import rlcolab
+            return rlcolab.hud_event(_clean(payload))
+        except Exception as e:  # never let a visual break the learner's run
+            sys.stderr.write(f"[rlhud] notebook render failed ({type(e).__name__}: {e}); falling back to text\n")
+            return False
     if not _IN_APP:
         return False
     payload["type"] = kind

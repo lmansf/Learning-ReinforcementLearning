@@ -1,0 +1,743 @@
+{
+ "title": "Reward Signal",
+ "lessons": [
+  {
+   "id": "00-welcome",
+   "num": "00",
+   "title": "Boot Sequence",
+   "chapter": "Orientation",
+   "summary": "How this training ground works — reading panes, the workbench, checks, and your HUD.",
+   "minutes": 8,
+   "notebook": "00 · Boot Sequence.ipynb",
+   "quizzes": 1,
+   "exercises": [
+    {
+     "id": "01-first-signal",
+     "title": "First signal",
+     "xp": 50,
+     "hints": [
+      "Keep a running total as you loop over xs.",
+      "After adding xs[i] to the total, the mean so far is total / (i + 1).",
+      "total = 0; out = []; for i, x in enumerate(xs): total += x; out.append(total / (i + 1))"
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "01-the-rl-problem",
+   "num": "01",
+   "title": "The RL Problem",
+   "chapter": "Foundations",
+   "summary": "Agents, environments, rewards, returns and discounting — the vocabulary everything else is built on.",
+   "minutes": 25,
+   "notebook": "01 · The RL Problem.ipynb",
+   "quizzes": 2,
+   "exercises": [
+    {
+     "id": "01-discounted-return",
+     "title": "Discounted return",
+     "xp": 100,
+     "hints": [
+      "discounted_return: loop with k = 0, 1, 2… and add gamma**k * rewards[k].",
+      "returns_to_go: start with G = 0 after the final step and walk the list in reverse.",
+      "G = 0; out = []; for r in reversed(rewards): G = r + gamma * G; out.append(G) — then reverse out."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    },
+    {
+     "id": "02-agent-loop",
+     "title": "The agent loop",
+     "xp": 100,
+     "hints": [
+      "Use a `while True:` loop and `break` once terminated or truncated is True.",
+      "Accumulate `total += reward` and `steps += 1` inside the loop.",
+      "random_policy can be `return random.randrange(5)`."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "02-bandits",
+   "num": "02",
+   "title": "Multi-Armed Bandits",
+   "chapter": "Foundations",
+   "summary": "Exploration vs exploitation in the simplest possible RL problem — action values, ε-greedy, optimism, UCB and gradient bandits.",
+   "minutes": 45,
+   "notebook": "02 · Multi-Armed Bandits.ipynb",
+   "quizzes": 5,
+   "exercises": [
+    {
+     "id": "01-epsilon-greedy",
+     "title": "An ε-greedy bandit agent",
+     "xp": 120,
+     "hints": [
+      "`incremental_update` is literally one line. In `epsilon_greedy`, draw `rng.random()` once: if it is below ε, explore.",
+      "To break ties: `best = np.flatnonzero(Q == Q.max())` gives the indices of every maximal arm; `rng.choice(best)` picks one. In `update`, increment `self.N[a]` *before* computing `1 / self.N[a]`.",
+      "`update`: `self.N[a] += 1; step = self.alpha if self.alpha is not None else 1.0 / self.N[a]; self.Q[a] = incremental_update(self.Q[a], r, step)`. Remember to wrap returned arms in `int(...)`."
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    },
+    {
+     "id": "02-testbed",
+     "title": "The 10-armed testbed",
+     "xp": 150,
+     "hints": [
+      "Allocate `rewards = np.zeros((n_runs, n_steps))` and the same for `optimal`; one row per run. At the end, `.mean(axis=0)` averages over runs.",
+      "Inside the run loop: `a = agent.act(); optimal[i, t] = a == bandit.optimal_action; r = bandit.pull(a); agent.update(a, r); rewards[i, t] = r`. Record optimality *before* pulling — a nonstationary bandit changes its best arm after each pull.",
+      "`compare_epsilons`: `results[eps] = run_testbed(lambda s, e=eps: EpsilonGreedyAgent(10, epsilon=e, seed=s), n_runs=n_runs, n_steps=n_steps, seed=seed)`. The `e=eps` default argument freezes the loop variable inside the lambda."
+     ],
+     "has_check": true,
+     "timeout": 40,
+     "pretrain": false
+    },
+    {
+     "id": "03-ucb",
+     "title": "Upper Confidence Bound",
+     "xp": 120,
+     "hints": [
+      "Use `np.log` (natural log). Start with `scores = np.full(len(Q), np.inf)` and only compute the bound where `N > 0`, so you never divide by zero.",
+      "A boolean mask does it in one line: `tried = N > 0; scores[tried] = Q[tried] + c * np.sqrt(np.log(t) / N[tried])`. In the loop, `t` already starts at 1 — don't pass `t - 1` or ln 0 appears.",
+      "Loop body: `a = ucb_action(Q, N, t, c); r = bandit.pull(a); N[a] += 1; Q[a] += (r - Q[a]) / N[a]; rewards.append(r); optimal.append(a == bandit.optimal_action)`."
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "03-mdps",
+   "num": "03",
+   "title": "Markov Decision Processes",
+   "chapter": "Foundations",
+   "summary": "The formal model behind RL — states, dynamics, policies, value functions and the Bellman equations.",
+   "minutes": 45,
+   "notebook": "03 · Markov Decision Processes.ipynb",
+   "quizzes": 4,
+   "exercises": [
+    {
+     "id": "01-one-step-lookahead",
+     "title": "One-step lookahead",
+     "xp": 100,
+     "hints": [
+      "`env.P[s][a]` is a short list of tuples. Two nested loops are enough: over `a in range(env.n_actions)`, then `for prob, s2, r, done in env.P[s][a]`.",
+      "Accumulate `q[a] += prob * (r + gamma * V[s2])`, but replace the `gamma * V[s2]` part with 0 when `done` is True. Terminal states themselves only have self-loops with reward 0 and done=True, so their q is 0 automatically.",
+      "`q[a] += prob * (r + (0.0 if done else gamma * V[s2]))`; `q_table` is `np.array([q_from_v(env, V, s, gamma) for s in range(env.n_states)])`; `greedy_policy` is `np.argmax(Q, axis=1)`."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    },
+    {
+     "id": "02-solve-bellman",
+     "title": "Solving the Bellman equation exactly",
+     "xp": 130,
+     "hints": [
+      "Three nested loops: states `s`, actions `a`, and outcomes `(prob, s2, r, done)` in `env.P[s][a]`. The weight of an outcome under the policy is `policy[s, a] * prob`.",
+      "Every outcome adds `w * r` to `r_pi[s]`. Only outcomes with `done == False` add `w` to `P_pi[s, s2]`. Terminal and wall states only have `done=True` self-loops, so their rows stay zero and their value comes out 0.",
+      "`solve_v`: `P_pi, r_pi = policy_model(env, policy); return np.linalg.solve(np.eye(env.n_states) - gamma * P_pi, r_pi)`."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    },
+    {
+     "id": "03-optimal-policy",
+     "title": "Optimal policies by brute force",
+     "xp": 120,
+     "hints": [
+      "`decision_states(env)` gives the list of states that need an action. `itertools.product(range(env.n_actions), repeat=len(states))` yields every tuple of actions for them.",
+      "For each tuple: `actions = np.zeros(env.n_states, dtype=int); actions[states] = choice; v = solve_v(env, np.eye(env.n_actions)[actions], gamma)`. Keep it if `v.sum()` beats the best so far.",
+      "`is_optimal`: `return all(abs(V[s] - q_from_v(env, V, s, gamma).max()) <= tol for s in range(env.n_states))`."
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "04-dynamic-programming",
+   "num": "04",
+   "title": "Dynamic Programming",
+   "chapter": "Tabular Methods",
+   "summary": "Planning with a perfect model — policy evaluation, policy improvement, policy iteration, value iteration and GPI.",
+   "minutes": 50,
+   "notebook": "04 · Dynamic Programming.ipynb",
+   "quizzes": 4,
+   "exercises": [
+    {
+     "id": "01-policy-evaluation",
+     "title": "Iterative policy evaluation",
+     "xp": 120,
+     "hints": [
+      "`expected_update` is the same double loop as `q_from_v`, except each outcome is weighted by `policy[s, a] * prob` and everything is summed into one number.",
+      "Structure: `for sweep in range(1, max_sweeps + 1): delta = 0.0; for s in range(env.n_states): v_new = expected_update(...); delta = max(delta, abs(v_new - V[s])); V[s] = v_new` and then `if delta < theta: break`.",
+      "Return `V, sweep`. Make sure `V` is a float array you are allowed to modify: `V = np.zeros(env.n_states) if V is None else np.array(V, dtype=float)`."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    },
+    {
+     "id": "02-policy-iteration",
+     "title": "Policy iteration",
+     "xp": 140,
+     "hints": [
+      "`policy_improvement`: loop over states; `q = q_from_v(env, V, s, gamma)`; `best = int(np.argmax(q))`; then `new[s, best] = 1.0`.",
+      "Tie rule: `old_a = int(np.argmax(old_policy[s]))`; `if q[old_a] >= q[best] - tol: best = old_a`. Without it, two equally good actions can alternate forever and the loop never sees a stable policy.",
+      "`policy_iteration` loop: `iterations += 1; V = policy_evaluation(env, policy, gamma, theta, V); new = policy_improvement(env, V, gamma, old_policy=policy); if np.array_equal(new, policy): return policy, V, iterations; policy = new`."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    },
+    {
+     "id": "03-value-iteration",
+     "title": "Value iteration on a slippery world",
+     "xp": 140,
+     "hints": [
+      "Value iteration is policy evaluation with the average over π replaced by a max over actions. The loop skeleton is the same as in exercise 1.",
+      "`for _ in range(max_sweeps): delta = 0.0; for s in range(env.n_states): v_new = q_from_v(env, V, s, gamma).max(); delta = max(delta, abs(v_new - V[s])); V[s] = v_new` then `deltas.append(delta)` and `if delta < theta: break`.",
+      "Policy extraction after the loop: `for s in range(env.n_states): policy[s, np.argmax(q_from_v(env, V, s, gamma))] = 1.0`."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "05-monte-carlo",
+   "num": "05",
+   "title": "Monte Carlo Methods",
+   "chapter": "Tabular Methods",
+   "summary": "Learn values and policies from complete episodes of experience — no model required. Blackjack, ε-soft control and importance sampling.",
+   "minutes": 45,
+   "notebook": "05 · Monte Carlo Methods.ipynb",
+   "quizzes": 3,
+   "exercises": [
+    {
+     "id": "01-mc-prediction",
+     "title": "First-visit Monte Carlo prediction",
+     "xp": 120,
+     "hints": [
+      "Keep two dicts, `returns_sum` and `returns_count` (a `collections.defaultdict` is handy). The estimate is their ratio — you could also keep a running mean.",
+      "Before the backward pass, record the first index at which each state appears: `first = {}; for t, (s, _, _) in enumerate(episode): first.setdefault(s, t)`. In the backward pass, skip time t when `first_visit and first[s] != t`.",
+      "G = 0.0\nfor t in range(len(episode) - 1, -1, -1):\n    s, _, r = episode[t]\n    G = r + gamma * G\n    if first_visit and first[s] != t: continue\n    returns_sum[s] += G; returns_count[s] += 1\n\n…and finally `return {s: returns_sum[s] / returns_count[s] for s in returns_count}`."
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    },
+    {
+     "id": "02-mc-control",
+     "title": "On-policy MC control on Blackjack",
+     "xp": 150,
+     "hints": [
+      "There is no separate 'improvement' step: because every new episode acts ε-greedily on the *latest* Q, evaluation and improvement are interleaved — generalised policy iteration, one episode at a time.",
+      "Keep a second dict `N = {state: np.zeros(n_actions)}` of visit counts next to Q. Create both entries when you first see a state, *before* calling epsilon_greedy on it.",
+      "After generating `episode`:\n\nfirst = {}\nfor t, (s, a, _) in enumerate(episode): first.setdefault((s, a), t)\nG = 0.0\nfor t in range(len(episode) - 1, -1, -1):\n    s, a, r = episode[t]\n    G = r + gamma * G\n    if first[(s, a)] == t:\n        N[s][a] += 1\n        Q[s][a] += (G - Q[s][a]) / N[s][a]"
+     ],
+     "has_check": true,
+     "timeout": 40,
+     "pretrain": false
+    },
+    {
+     "id": "03-importance-sampling",
+     "title": "Ordinary vs weighted importance sampling",
+     "xp": 130,
+     "hints": [
+      "Keep two running sums across episodes: `sum_wg` (Σ ρG) and `sum_w` (Σ ρ). Then both estimates are one division each.",
+      "Inside one episode: start `rho = 1.0, G = 0.0`; for each step t, `rho *= pi(a, s) / b(a, s)` and `G += gamma**t * r`. If π would never take the action, ρ becomes 0 and the episode contributes nothing to the numerator.",
+      "for k, ep in enumerate(episodes, start=1):\n    rho, G = 1.0, 0.0\n    for t, (s, a, r) in enumerate(ep):\n        rho *= pi(a, s) / b(a, s); G += gamma**t * r\n    sum_wg += rho * G; sum_w += rho\n    ordinary.append(sum_wg / k)\n    weighted.append(sum_wg / sum_w if sum_w > 0 else 0.0)"
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "06-td-learning",
+   "num": "06",
+   "title": "Temporal-Difference Learning",
+   "chapter": "Tabular Methods",
+   "summary": "Learn a guess from a guess — TD(0), SARSA, Q-learning, Expected SARSA and Double Q-learning, with the cliff as the proving ground.",
+   "minutes": 50,
+   "notebook": "06 · Temporal-Difference Learning.ipynb",
+   "quizzes": 3,
+   "exercises": [
+    {
+     "id": "01-td0-random-walk",
+     "title": "TD(0) on the random walk",
+     "xp": 120,
+     "hints": [
+      "The episode loop is the same as in every lesson so far: `s, _ = env.reset()`, then `s2, r, terminated, truncated, _ = env.step(policy(s))`. The only new thing is the update you do right after each step.",
+      "Use your own `td_error`: `V[s] += alpha * td_error(r, V[s], V[s2], gamma, terminated)`. Then `s = s2` and continue unless the episode is over.",
+      "def td_error(r, v_s, v_next, gamma, terminated):\n    target = r if terminated else r + gamma * v_next\n    return target - v_s\n\nand in td0: `if V is None: V = np.full(env.n_states, float(init))` before the episode loop; `return V` at the end."
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    },
+    {
+     "id": "02-sarsa-cliff",
+     "title": "SARSA on the cliff",
+     "xp": 150,
+     "hints": [
+      "The name is the update: S, A, R, S', A'. You must pick A' *before* updating, use it in the target, and then actually take it on the next step — do not pick a fresh action at the top of the loop.",
+      "Skeleton:\n\ns, _ = env.reset(); a = epsilon_greedy(Q, s, epsilon, rng); G = 0.0\nwhile True:\n    s2, r, terminated, truncated, _ = env.step(a); G += r\n    a2 = epsilon_greedy(Q, s2, epsilon, rng)\n    ...",
+      "...then `sarsa_update(Q, s, a, r, s2, a2, alpha, gamma, terminated)`; `if terminated or truncated: break`; `s, a = s2, a2`. After the loop, `returns.append(G)`. sarsa_update itself: `target = r if terminated else r + gamma * Q[s2, a2]; delta = target - Q[s, a]; Q[s, a] += alpha * delta; return delta`."
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    },
+    {
+     "id": "03-q-learning-cliff",
+     "title": "Q-learning on the cliff",
+     "xp": 150,
+     "hints": [
+      "The behaviour policy (how you pick the action you take) is still ε-greedy. Only the *target* changes: it assumes you will act greedily from S' onwards.",
+      "`np.max(Q[s2])` is the value of the best action in S'. If `terminated`, there is no S' to bootstrap from: `target = r`.",
+      "Loop body:\n\na = epsilon_greedy(Q, s, epsilon, rng)\ns2, r, terminated, truncated, _ = env.step(a)\nG += r\nq_learning_update(Q, s, a, r, s2, alpha, gamma, terminated)\nif terminated or truncated: break\ns = s2"
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    },
+    {
+     "id": "04-double-q",
+     "title": "Double Q-learning vs maximisation bias",
+     "xp": 150,
+     "hints": [
+      "The bias comes from using the *same* noisy numbers to both choose the best action and estimate its value. Two independent tables break that link: one chooses, the other judges.",
+      "A clean trick: `A, B = (Q1, Q2) if update_first else (Q2, Q1)`, then write the update once in terms of A (updated, selects) and B (evaluates).",
+      "Episode loop:\n\ns, _ = env.reset()\nwhile True:\n    a = epsilon_greedy(Q1[s] + Q2[s], epsilon, rng)\n    if s == env.A: went_left.append(a == env.LEFT)\n    s2, r, terminated, truncated, _ = env.step(a)\n    double_q_update(Q1, Q2, s, a, r, s2, alpha, gamma, terminated, rng.random() < 0.5)\n    if terminated or truncated: break\n    s = s2"
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "07-nstep-and-planning",
+   "num": "07",
+   "title": "n-step Bootstrapping & Planning",
+   "chapter": "Tabular Methods",
+   "summary": "The dial between TD and Monte Carlo (n-step returns, eligibility traces), then learned models and Dyna-Q — imagining experience to learn faster.",
+   "minutes": 50,
+   "notebook": "07 · n-step Bootstrapping & Planning.ipynb",
+   "quizzes": 3,
+   "exercises": [
+    {
+     "id": "01-nstep-td",
+     "title": "n-step TD prediction",
+     "xp": 150,
+     "hints": [
+      "Initialise `T = float('inf')` and `t = 0`. Each iteration: if `t < T`, take a step and append to `states`/`rewards`, setting `T = t + 1` when the episode ends. Then compute τ and update if τ ≥ 0. Break when `τ == T − 1`; otherwise `t += 1`.",
+      "Indices are the whole difficulty. The rewards that follow time τ are R_τ+1 … R_min(τ+n, T), i.e. the slice `rewards[tau + 1 : min(tau + n, T) + 1]`. Bootstrap from `V[states[tau + n]]` only if `tau + n < T` — otherwise the window already reaches the end of the episode. (Once T is set it is an int, so `min` returns an int you can slice with.)",
+      "if tau >= 0:\n    end = min(tau + n, T)\n    boot = V[states[tau + n]] if tau + n < T else 0.0\n    G = nstep_target(rewards[tau + 1:end + 1], gamma, boot)\n    V[states[tau]] += alpha * (G - V[states[tau]])\nif tau == T - 1: break\nt += 1"
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    },
+    {
+     "id": "02-td-lambda",
+     "title": "TD(λ) with eligibility traces",
+     "xp": 120,
+     "hints": [
+      "It is the TD(0) loop from lesson 6 with two extra lines: the trace bump before the update and the decay after. The update itself becomes a numpy vector operation over the whole `V`.",
+      "Order matters. Compute δ first (using the *old* V), then `e[s] += 1`, then `V += alpha * delta * e`, then `e *= gamma * lam`. Swap the bump and the update and the current state gets no credit for its own TD error.",
+      "while True:\n    s2, r, terminated, truncated, _ = env.step(policy(s))\n    delta = r + (0.0 if terminated else gamma * V[s2]) - V[s]\n    e[s] += 1.0\n    V += alpha * delta * e\n    e *= gamma * lam\n    if terminated or truncated: break\n    s = s2"
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    },
+    {
+     "id": "03-dyna-q",
+     "title": "Dyna-Q on a maze",
+     "xp": 170,
+     "hints": [
+      "The maze only rewards reaching G (+1), so the first episode is a long random walk for everyone. Planning pays off from episode 2: the single rewarding transition gets replayed and its value propagates backwards through the remembered transitions.",
+      "The model of a deterministic env is just a lookup table: overwrite `model[(s, a)]` every time you take `a` in `s`. Planning uses the same `q_update` as direct RL — the only difference is where the transition comes from.",
+      "Inside the episode loop:\n\na = epsilon_greedy(Q, s, epsilon, rng)\ns2, r, terminated, truncated, _ = env.step(a); n += 1\nq_update(Q, s, a, r, s2, terminated, alpha, gamma)\nmodel[(s, a)] = (r, s2, terminated)\nplan(Q, model, n_planning, rng, alpha, gamma)\nif terminated or truncated: break\ns = s2"
+     ],
+     "has_check": true,
+     "timeout": 40,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "08-function-approximation",
+   "num": "08",
+   "title": "Function Approximation",
+   "chapter": "Deep RL",
+   "summary": "Replace the table with a parameterised function — features, linear values, semi-gradient TD, tile coding, and the deadly triad.",
+   "minutes": 45,
+   "notebook": "08 · Function Approximation.ipynb",
+   "quizzes": 4,
+   "exercises": [
+    {
+     "id": "01-linear-value-updates",
+     "title": "Linear values: gradient MC & semi-gradient TD(0)",
+     "xp": 120,
+     "hints": [
+      "For a linear function the gradient ∇v̂(s, w) is simply the feature vector x(s), so every update has the shape `w += alpha * error * x`.",
+      "gradient_mc_update: first build the list of returns backwards (G = r + gamma * G), then loop over zip(xs, returns) and apply the update.",
+      "td0_update: `target = r if terminated else r + gamma * v_hat(w, x_next)`; `delta = target - v_hat(w, x)`; `w += alpha * delta * x`; `return delta`."
+     ],
+     "has_check": true,
+     "timeout": 40,
+     "pretrain": false
+    },
+    {
+     "id": "02-tile-coder",
+     "title": "Build a tile coder",
+     "xp": 120,
+     "hints": [
+      "`scaled = (x - self.low) / (self.high - self.low) * self.tiles` — now 1 unit = 1 tile.",
+      "You can do all tilings at once: `coords = np.floor(scaled[None, :] + self.offsets).astype(int)` has shape (n_tilings, dims). Clip it with `np.clip(coords, 0, self.tiles)`.",
+      "`flat = np.ravel_multi_index(coords.T, self.shape)` then `return np.arange(self.n_tilings) * self.tiles_per_tiling + flat`."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    },
+    {
+     "id": "03-mountain-car-sarsa",
+     "title": "Semi-gradient SARSA on Mountain Car",
+     "xp": 200,
+     "hints": [
+      "q_values: fancy indexing `w[:, idx]` has shape (n_actions, n_tilings); sum over the last axis.",
+      "sarsa_update: `target = r if terminated else r + gamma * w[a_next, idx_next].sum()` and `delta = target - w[a, idx].sum()`.",
+      "Then `w[a, idx] += alpha * delta` and `return delta`. Because each tile index appears once per tiling, the in-place add is safe."
+     ],
+     "has_check": true,
+     "timeout": 60,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "09-dqn",
+   "num": "09",
+   "title": "Deep Q-Networks",
+   "chapter": "Deep RL",
+   "summary": "Q-learning with a neural network — manual backprop, experience replay, target networks, Huber loss and Double DQN.",
+   "minutes": 60,
+   "notebook": "09 · Deep Q-Networks.ipynb",
+   "quizzes": 4,
+   "exercises": [
+    {
+     "id": "01-numpy-mlp",
+     "title": "A neural network from scratch",
+     "xp": 150,
+     "hints": [
+      "forward: `h = x; self._inputs = []; for i in range(self.n_layers): W, b = self.params[2*i], self.params[2*i+1]; self._inputs.append(h); h = h @ W + b` and `np.maximum(h, 0)` if i is not the last layer.",
+      "backward: loop `for i in reversed(range(self.n_layers))`. The gradient for W is `self._inputs[i].T @ d`, for b it is `d.sum(axis=0)`.",
+      "Before moving to layer i−1: `d = (d @ W.T) * (self._inputs[i] > 0)`. The ReLU that produced layer i's input is exactly where `self._inputs[i] > 0`. Skip this for i = 0."
+     ],
+     "has_check": true,
+     "timeout": 30,
+     "pretrain": false
+    },
+    {
+     "id": "02-replay-buffer",
+     "title": "Replay buffer & Huber loss",
+     "xp": 120,
+     "hints": [
+      "add: `i = self.pos; self.obs[i] = s; …; self.pos = (self.pos + 1) % self.capacity; self.size = min(self.size + 1, self.capacity)`.",
+      "sample: `idx = self.rng.integers(0, self.size, size=batch_size)` and index every array with the same `idx`.",
+      "huber: `a = np.abs(x); np.where(a <= delta, 0.5 * x**2, delta * (a - 0.5 * delta))`. huber_grad: `np.clip(x, -delta, delta)`."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    },
+    {
+     "id": "03-dqn-cartpole",
+     "title": "DQN on CartPole",
+     "xp": 300,
+     "hints": [
+      "epsilon_by_step: `frac = min(t / decay_steps, 1.0); return start + frac * (end - start)`.",
+      "td_targets: plain DQN `next_v = q_next_target.max(axis=1)`; Double DQN `a = q_next_online.argmax(axis=1); next_v = q_next_target[np.arange(len(a)), a]`. Then `rewards + gamma * (1 - terminated) * next_v`.",
+      "dqn_loss_and_grad: `rows = np.arange(B); err = q_pred[rows, actions] - targets`; loss is the mean of the Huber of err; `dq = np.zeros_like(q_pred); dq[rows, actions] = np.clip(err, -1, 1) / B`."
+     ],
+     "has_check": true,
+     "timeout": 150,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "10-policy-gradients",
+   "num": "10",
+   "title": "Policy Gradients",
+   "chapter": "Deep RL",
+   "summary": "Optimise the policy directly — softmax policies, the log-derivative trick, the policy gradient theorem, REINFORCE and baselines.",
+   "minutes": 50,
+   "notebook": "10 · Policy Gradients.ipynb",
+   "quizzes": 3,
+   "exercises": [
+    {
+     "id": "01-softmax-policy",
+     "title": "A softmax policy and its score function",
+     "xp": 120,
+     "hints": [
+      "softmax: `z = z - z.max(axis=-1, keepdims=True); e = np.exp(z); return e / e.sum(axis=-1, keepdims=True)`.",
+      "grad_log_pi: compute `p = policy_probs(theta, x)`, build a one-hot vector for `a`, subtract `p` from it.",
+      "`np.outer(x, onehot - p)` has shape (d, n_actions), like theta. sample_action: `int(rng.choice(len(p), p=p))`."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    },
+    {
+     "id": "02-reinforce-baseline",
+     "title": "REINFORCE with a baseline on CartPole",
+     "xp": 200,
+     "hints": [
+      "Compute `adv = G - X @ w` once, at the start, and use it for the baseline update; normalise a copy for the policy step.",
+      "Batch probabilities: `P = softmax(X @ theta)` has shape (N, 2). One-hots: `np.eye(theta.shape[1])[A]`.",
+      "`theta += lr * X.T @ ((onehot - P) * adv[:, None]) / N` — that is the mean of Âₜ·outer(xₜ, onehotₜ − πₜ)."
+     ],
+     "has_check": true,
+     "timeout": 60,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "11-actor-critic",
+   "num": "11",
+   "title": "Actor-Critic",
+   "chapter": "Deep RL",
+   "summary": "A learned critic turns REINFORCE into an online, low-variance learner — advantages, one-step actor-critic, A2C and GAE(λ).",
+   "minutes": 45,
+   "notebook": "11 · Actor-Critic.ipynb",
+   "quizzes": 3,
+   "exercises": [
+    {
+     "id": "01-gae",
+     "title": "Generalised Advantage Estimation",
+     "xp": 120,
+     "hints": [
+      "`next_values = np.append(values[1:], last_value)` lines up V(sₜ₊₁) with each step.",
+      "δ = rewards + gamma * (1 - dones) * next_values - values — all vectorised.",
+      "GAE: `running = 0; for t in reversed(range(T)): running = delta[t] + gamma * lam * (1 - dones[t]) * running; adv[t] = running`."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    },
+    {
+     "id": "02-a2c-cartpole",
+     "title": "Advantage actor-critic on CartPole",
+     "xp": 200,
+     "hints": [
+      "actor_loss_grad: `P = softmax(X @ theta)`, `onehot = np.eye(theta.shape[1])[A]`.",
+      "`return -X.T @ ((onehot - P) * adv[:, None]) / len(A)`.",
+      "critic_loss_grad: `return (v_pred - targets.reshape(-1, 1)) / len(v_pred)`."
+     ],
+     "has_check": true,
+     "timeout": 60,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "12-ppo",
+   "num": "12",
+   "title": "Proximal Policy Optimization",
+   "chapter": "Deep RL",
+   "summary": "Reuse each batch for several careful updates — probability ratios, the clipped surrogate, value and entropy terms, and why PPO is the default.",
+   "minutes": 50,
+   "notebook": "12 · Proximal Policy Optimization.ipynb",
+   "quizzes": 3,
+   "exercises": [
+    {
+     "id": "01-clipped-objective",
+     "title": "The clipped surrogate objective",
+     "xp": 150,
+     "hints": [
+      "`ratio = np.exp(logp_new - logp_old)`; `loss = -np.mean(np.minimum(ratio * adv, np.clip(ratio, 1 - eps, 1 + eps) * adv))`.",
+      "`flat = ((adv > 0) & (ratio > 1 + eps)) | ((adv < 0) & (ratio < 1 - eps))` marks samples whose gradient is zero.",
+      "`grad = np.where(flat, 0.0, -ratio * adv) / len(adv)`. Diagnostics: `log_r = logp_new - logp_old; r = np.exp(log_r)`."
+     ],
+     "has_check": true,
+     "timeout": 20,
+     "pretrain": false
+    },
+    {
+     "id": "02-ppo-cartpole",
+     "title": "PPO on CartPole",
+     "xp": 300,
+     "hints": [
+      "Normalise: `adv = batch['advantages'][mb]; adv = (adv - adv.mean()) / (adv.std() + 1e-8)`. Rows for fancy indexing: `r = np.arange(len(mb))`, then `logp = np.log(P[r, act] + 1e-12)`.",
+      "`_, dlogp = ppo_clip_loss(logp, batch['logp_old'][mb], adv, clip_eps)`; `onehot = np.eye(P.shape[1])[act]`; `dlogits = dlogp[:, None] * (onehot - P) + ent_coef * entropy_loss_grad(P)`.",
+      "Critic: `v = critic.forward(obs); target = batch['returns'][mb][:, None] * value_scale; critic_opt.step(critic.backward((v - target) / len(mb)))`. KL: `lr_ = logp - batch['logp_old'][mb]; kls.append(np.mean(np.exp(lr_) - 1 - lr_))`."
+     ],
+     "has_check": true,
+     "timeout": 60,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "13-capstone-core-runner",
+   "num": "13",
+   "title": "Capstone — Core Runner",
+   "chapter": "Capstone",
+   "summary": "Four missions in an original salvage game. Design the state, pick the algorithm, train an agent, and beat par.",
+   "minutes": 120,
+   "notebook": "13 · Capstone — Core Runner.ipynb",
+   "quizzes": 2,
+   "exercises": [
+    {
+     "id": "01-boot-sequence",
+     "title": "Mission 1 · Boot Sequence",
+     "xp": 200,
+     "hints": [
+      "The update is Q[s, a] += alpha * (target - Q[s, a]). Only the `terminated` flag removes the bootstrap term.",
+      "Tie-breaking: `best = np.flatnonzero(Q[s] == Q[s].max()); return int(rng.choice(best))`. With an all-zero table, plain argmax would always go UP.",
+      "epsilon_by_episode: `frac = min(1.0, ep / max(1, decay_frac * episodes)); return eps_start + frac * (eps_end - eps_start)`."
+     ],
+     "has_check": true,
+     "timeout": 60,
+     "pretrain": false
+    },
+    {
+     "id": "02-vent-maze",
+     "title": "Mission 2 · Vent Maze (1,500-step budget)",
+     "xp": 250,
+     "hints": [
+      "Keep `model[(s, a)] = (r, s2, terminated)` and a list of the keys you have seen so you can sample one uniformly with rng.integers(len(keys)).",
+      "After each real Q-update, do n_planning updates: pick a random seen (s, a), look up (r, s2, term) and apply the same Q-learning update to it.",
+      "eps = max(0.05, 1 - used / (0.5 * budget)) where used = budget - env.steps_left. With n_planning=30 you should reach 47.6."
+     ],
+     "has_check": true,
+     "timeout": 60,
+     "pretrain": false
+    },
+    {
+     "id": "03-patrol-deck",
+     "title": "Mission 3 · Patrol Deck (design the state)",
+     "xp": 250,
+     "hints": [
+      "Think of mixed-radix numbers: index = ((cell · n_masks) + mask) · period + phase, with cell = row · W + col and n_masks = 2 ** n_cores.",
+      "The cores bitmask: mask = sum(int(got) << i for i, got in enumerate(env.collected)). Phase is env.t % env.period — not env.t itself, or the table would be infinite.",
+      "n_states_for(env) = env.h * env.w * 2 ** len(env.core_list) * env.period. The loop body is the same as Mission 1, except s2 = encoder(env) instead of the observation."
+     ],
+     "has_check": true,
+     "timeout": 60,
+     "pretrain": false
+    },
+    {
+     "id": "04-deep-salvage",
+     "title": "Mission 4 · Deep Salvage (DQN)",
+     "xp": 400,
+     "hints": [
+      "Double DQN decouples selection from evaluation: a_star = online.forward(S2).argmax(1); q_next = target.forward(S2)[np.arange(len(S2)), a_star].",
+      "Only the Q-values of the actions actually taken receive gradient: rows = np.arange(batch); grad = np.zeros_like(qs); grad[rows, A] = huber_grad(qs[rows, A], y).",
+      "If training collapses: lower lr (3e-4), longer exploration (explore_frac 0.5), or more total_steps (100k). Watch the replays of failures — getting stuck against walls means it needs more exploration."
+     ],
+     "has_check": true,
+     "timeout": 90,
+     "pretrain": true
+    }
+   ]
+  },
+  {
+   "id": "14-beyond",
+   "num": "14",
+   "title": "Beyond the Training Ground",
+   "chapter": "Capstone",
+   "summary": "Where to go next — real libraries, bigger problems, and the open frontiers of RL.",
+   "minutes": 15,
+   "notebook": "14 · Beyond the Training Ground.ipynb",
+   "quizzes": 1,
+   "exercises": [
+    {
+     "id": "01-open-sandbox",
+     "title": "Open sandbox — bring your own agent",
+     "xp": 0,
+     "hints": [
+      "Gymnasium custom envs subclass gymnasium.Env and define observation_space, action_space, reset() and step().",
+      "For Core Runner level 4: observation_space = gymnasium.spaces.Box(0, 1, shape=(133,)), action_space = gymnasium.spaces.Discrete(5). Note two of the globals can be negative — use low=-1.",
+      "from stable_baselines3 import PPO; model = PPO('MlpPolicy', env).learn(100_000)"
+     ],
+     "has_check": false,
+     "timeout": 120,
+     "pretrain": false
+    }
+   ]
+  },
+  {
+   "id": "15-bonus-inventory",
+   "num": "15",
+   "title": "Bonus Capstone — Stock the Shelves",
+   "chapter": "Bonus",
+   "summary": "A real-world RL project end to end — retail inventory replenishment, from sales data and a classic planner to an agent judged on a year it has never seen.",
+   "minutes": 90,
+   "notebook": "15 · Bonus Capstone — Stock the Shelves.ipynb",
+   "quizzes": 3,
+   "exercises": [
+    {
+     "id": "01-baseline-planner",
+     "title": "Know your demand, then beat a planner",
+     "xp": 250,
+     "hints": [
+      "Boolean masks do all the work: `normal = promo == 0`, then `d[normal & (dow == k)].mean()` for each weekday k.",
+      "For the lift build `base = np.array([d[normal & (dow == k)].mean() for k in range(7)])`; the expected demand on the promo days is `base[dow[promo == 1]].sum()`.",
+      "Python closures capture variables, not values — but evaluate_policy calls your lambda immediately, so `lambda e: s_S_policy(e, s, S)` inside the loop is fine. Keep `best = (None, None, -np.inf)` and update it whenever a profit is larger."
+     ],
+     "has_check": true,
+     "timeout": 60,
+     "pretrain": false
+    },
+    {
+     "id": "02-residual-q",
+     "title": "Residual Q-learning: teach the planner new tricks",
+     "xp": 300,
+     "hints": [
+      "`_, dow, promo_soon = env.decode_state(obs)`; for the action: `if env.position > s + offset: return 0` else `return env.nearest_action(S + offset - env.position)`.",
+      "Head start: `Q[:, int(np.flatnonzero(offsets == 0)[0])] = 1.0`. ε: `eps = max(0.0, eps_start * (1 - ep / (0.7 * episodes)))`.",
+      "Inside the episode: `k = int(rng.integers(len(offsets))) if rng.random() < eps else int(np.argmax(Q[c]))`, step with `adjusted_action(env, s, S, offsets[k])`, then `Q[c, k] += alpha * (r + gamma * Q[c2].max() - Q[c, k])` where c2 = context of the new obs. The episode ends when `truncated` is True."
+     ],
+     "has_check": true,
+     "timeout": 60,
+     "pretrain": false
+    },
+    {
+     "id": "03-real-data",
+     "title": "Going real: an out-of-time evaluation",
+     "xp": 300,
+     "hints": [
+      "time_split: `{k: v[:n_train] for k, v in history.items()}` and the same with `v[n_train:]`. Lists and numpy arrays both slice this way.",
+      "make_envs: `InventoryEnv(demand_series=train['demand'], promo_series=train['promo'], dates=train['dates'], horizon=len(train['demand']), jitter_weeks=2)`; the test env drops jitter and adds `ref_demand=float(np.mean(train['demand']))`.",
+      "evaluate: `rows = [summarize(run_policy(env, make_policy(env), seed=s)[1]) for s in seeds]`, then average each key. run_pipeline: `s, S, _, _ = grid_search_sS(train_env)`, `Q, _ = train_residual_q(train_env, s, S, seed=seed)`, and `evaluate(test_env, lambda e: residual_policy(e, Q, s, S))`."
+     ],
+     "has_check": true,
+     "timeout": 60,
+     "pretrain": false
+    }
+   ]
+  }
+ ]
+}

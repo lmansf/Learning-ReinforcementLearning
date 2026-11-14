@@ -24,6 +24,42 @@ The server uses only the standard library. Your code runs with the **same Python
 that started the server**, so anything you `pip install` (torch, gymnasium,
 stable-baselines3…) is available to your exercises.
 
+## Google Drive / Colab edition
+
+The whole course also ships as **Google Colab notebooks that live in your Google Drive**, no
+local install needed: theory, quizzes, the interactive demos, auto-checked exercises with hints
+and solutions, XP and ranks, and both capstones.
+
+1. Download [`colab/RewardSignal.zip`](colab/RewardSignal.zip) (or the
+   [`colab/RewardSignal/`](colab/RewardSignal) folder) and put it in **My Drive** so you have
+   `My Drive/RewardSignal/` (*New → Folder upload*, or upload the zip and extract it there).
+2. In Drive, open **`00 · START HERE.ipynb`** with Google Colaboratory and run its first cell
+   (it mounts your Drive and finds the folder).
+3. Work through `00 · Boot Sequence.ipynb` … `15 · Bonus Capstone — Stock the Shelves.ipynb`.
+
+How it maps to the app:
+
+| Desktop app | Colab edition |
+|---|---|
+| Run | run the exercise cell; `rlhud` charts, grids, stats and Core Runner replays render below it (live charts update in place) |
+| Check | the **✅ Check** cell: re-runs the code you last ran in the exercise cell with `__name__ == "__check__"`, then the same `check.py` with the same helpers |
+| Hints | expandable 💡 cells that open one after another; a failed check also shows the next hint |
+| Solutions | hidden 🔒 form cells (double-click to reveal). The Settings cell can lock them (`after pass` / `never`); `python tools/build_colab.py --no-solutions` builds an edition without them |
+| Widgets, quizzes | the same JS demos as the app (bundled from `app/js`), quizzes record answers and XP |
+| XP / progress | `progress.json` in the Drive folder, shared by all notebooks; the dashboard in START HERE shows rank, XP, completion and the course map |
+| `workspace/` | `RewardSignal/workspace/` in Drive (e.g. the trained weights of Core Runner mission 4) |
+
+Everything is offline after upload: the HUD's JS and CSS live in `RewardSignal/runtime/assets/`
+(Google Fonts are optional). The notebooks also run in a local Jupyter: open them from the folder.
+
+**Maintainers:** lessons stay the single source of truth. After editing `lessons/` or `app/js`, run
+
+```bash
+python tools/build_colab.py                    # regenerates colab/RewardSignal/ and colab/RewardSignal.zip
+pip install nbformat nbclient ipykernel
+OMP_NUM_THREADS=1 python tools/validate_colab.py   # executes every notebook with the solutions; all checks must pass
+```
+
 ## Curriculum
 
 | # | Mission | Chapter |
@@ -68,8 +104,12 @@ runtime/             modules importable from exercises:
   rlenvs.py          bandit, GridWorld, CliffWalking, Blackjack, CartPole, MountainCar
   corerunner.py      the capstone game
   runner.py          execution / checking harness
+  rlcolab.py         Colab / Jupyter edition: setup, quizzes, widgets, checks, XP, dashboard
 lessons/             Markdown lessons + exercises (see AUTHORING.md)
 tools/validate.py    proves every solution passes and every starter does not
+tools/build_colab.py builds the Google Drive / Colab edition into colab/
+tools/validate_colab.py  executes the generated notebooks and checks every exercise passes
+colab/               the generated Colab edition (RewardSignal/ folder + RewardSignal.zip)
 workspace/           working directory for your runs and exported files
 ```
 

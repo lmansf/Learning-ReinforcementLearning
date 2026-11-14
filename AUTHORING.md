@@ -20,6 +20,12 @@ Lesson and exercise directories sort lexically, so prefix them with numbers.
 Run `python tools/validate.py 02-bandits` after every change. It proves that the
 solution passes every check, the starter does not, and every quiz/widget block parses.
 
+The Google Drive / Colab edition is generated from the same files: run
+`python tools/build_colab.py` to regenerate `colab/RewardSignal/` and
+`python tools/validate_colab.py 02` to execute that lesson's notebook with the solutions.
+Lesson ` ```python ` blocks that run standalone become runnable example cells there; everything
+else (pseudocode, diagrams, `$$` equations) stays as Markdown.
+
 ---
 
 ## lesson.md

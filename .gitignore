@@ -2,3 +2,7 @@ workspace/*
 !workspace/.gitkeep
 __pycache__/
 *.pyc
+/progress*.json
+colab/*/progress*.json
+colab/*/workspace/*
+!colab/*/workspace/README.txt
